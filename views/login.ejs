@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./styles/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</head>
+
+<body class="poppins-regular">
+
+    <div class="login">
+        <h1 class="LoginTitle">Login</h1>
+        <form class="NameAndPasswordForm" action="/logging-in" method="post">
+            <label>Username</label>
+            <div class="InputFields">
+                <span class="material-symbols-outlined"> person</span>
+                <input name="Username">
+                <div class="InputFieldBottomLine"></div>
+                <span class="incorrectUsernameOrPassword hidden" style="color: red;">
+                    Incorrect username or password</span>
+            </div>
+            <label>Password</label>
+            <div class="InputFields">
+                <span class="material-symbols-outlined"> lock</span>
+                <input name="Password" type="password">
+                <div class="InputFieldBottomLine"></div>
+                <span class="incorrectUsernameOrPassword hidden" style="color: red;">
+                    Incorrect username or password</span>
+            </div>
+            <button type="button" class="ForgotPassword poppins-regular">Forgot Password?</button>
+            <button type="submit" class="LoginButton poppins-regular">Login</button>
+        </form>
+        <p>Or Sign Up using</p>
+        <div class="ThirdPartyLogins">
+            <img src="./assets/images/294709_circle_twitter_icon.png">
+            <img src="./assets/images/png-transparent-fb-facebook-facebook-logo-social-media-icon-thumbnail.png">
+            <img src="./assets/images/2809765_google_media_online_search_social_icon.png">
+        </div>
+        <div class="alreadyHaveAnAccount">
+            <p>Already have an account?</p>
+            <a href="http://localhost:4000/sign-up">Go to Sign Up >></a>
+        </div>
+
+    </div>
+
+    <script>
+
+        inputIconAnimation();
+
+        document.querySelector(".NameAndPasswordForm").addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            isUserAlreadyExisted()
+                .then(isUserExisted => {
+                    isPasswordCorrect()
+                        .then(isPasswordCorrect => {
+                            if (isUserExisted && isPasswordCorrect) {
+                                event.target.submit();
+                            } else {
+                                displayMessage("show");
+                            }
+                        })
+                })
+        })
+
+        function isUserAlreadyExisted() {
+            var username = document.querySelector(".InputFields input[name='Username']").value;
+
+            return new Promise((resolve, reject) => {
+                fetch('verify-username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username })
+                })
+                    .then(response => response.json())
+                    .then(data => resolve(data.isUserAlreadyExisted))
+                    .catch(error => reject(error))
+            })
+
+        }
+
+        function isPasswordCorrect() {
+            var username = document.querySelector(".InputFields input[name='Username']").value;
+            var password = document.querySelector(".InputFields input[name='Password']").value;
+
+            return new Promise((resolve, reject) => {
+                fetch('verify-password', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username, password: password })
+                })
+                    .then(response => response.json())
+                    .then(data => resolve(data.isPasswordCorrect))
+                    .catch(error => reject(error))
+            })
+
+        }
+
+        function inputIconAnimation() {
+            document.querySelectorAll(".InputFields input").forEach(InputField => {
+                InputField.addEventListener('focus', (event) => {
+                    var UserIcon = event.target.parentNode.querySelector("span");
+                    UserIcon.classList.add("IconFocus");
+                })
+
+                InputField.addEventListener('blur', (event) => {
+                    var UserIcon = event.target.parentNode.querySelector("span");
+                    UserIcon.classList.remove("IconFocus");
+                })
+            })
+        }
+
+        function displayMessage(action) {
+            var messageDisplayer = document.querySelectorAll(".incorrectUsernameOrPassword");
+            for (var i = 0; i < messageDisplayer.length; i++) {
+                
+                action === "show" ? messageDisplayer[i].classList.remove("hidden") : messageDisplayer[i].classList.add("hidden");
+            }
+        }
+
+
+    </script>
+
+</body>
+
+</html>

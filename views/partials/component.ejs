@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./styles/signup.css">
+    <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</head>
+<body>
+
+    <div id="loginContainer"></div>
+
+    <script>
+        class Login {
+            constructor(title) {
+                this.title = title;
+            }
+
+            render() {
+                const loginContainer = document.getElementById('loginContainer');
+                loginContainer.innerHTML = `
+                    <div class="login">
+                        <h1 class="LoginTitle">${this.title}</h1>
+                        <form class="NameAndPasswordForm" action="/signing-up" method="post">
+                            <label>Username</label>
+                            <div class="InputFields">
+                                <span class="material-symbols-outlined"> person</span>
+                                <input name="Username">
+                                <div class="InputFieldBottomLine"></div>
+                            </div>
+                            <label>Password</label>
+                            <div class="InputFields">
+                                <span class="material-symbols-outlined"> lock</span>
+                                <input name="Password">
+                                <div class="InputFieldBottomLine"></div>
+                            </div>
+                            <button type="button" class="ForgotPassword poppins-regular">Forgot Password?</button>
+                            <button type="submit" class="LoginButton poppins-regular">Login</button>
+                        </form>
+                        <p>Or Sign Up using</p>
+                        <div class="ThirdPartyLogins">
+                            <img src="./assets/images/294709_circle_twitter_icon.png">
+                            <img src="./assets/images/png-transparent-fb-facebook-facebook-logo-social-media-icon-thumbnail.png">
+                            <img src="./assets/images/2809765_google_media_online_search_social_icon.png">
+                        </div>
+                        <p>Sign up</p>
+                    </div>
+                `;
+            }
+
+            addFocusBlurEvents() {
+                document.querySelectorAll(".InputFields input").forEach(InputField => {
+                    InputField.addEventListener('focus',(event)=> {
+                        var UserIcon = event.target.parentNode.querySelector("span");
+                        UserIcon.classList.add("IconFocus");
+                    })
+
+                    InputField.addEventListener('blur',(event)=> {
+                        var UserIcon = event.target.parentNode.querySelector("span");
+                        UserIcon.classList.remove("IconFocus");
+                    })
+                })
+            }
+        }
+
+        // Create an instance of the Login class and render it
+        const loginPage = new Login("Login");
+        loginPage.render();
+        loginPage.addFocusBlurEvents();
+    </script>
+
+</body>
+</html>

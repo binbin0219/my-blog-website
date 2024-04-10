@@ -1,0 +1,70 @@
+<%- include('partials/header.ejs'); %>
+
+<body>
+    <div class="Today">
+        <h1>Today</h1>
+    </div>
+
+
+    <div class="List">
+
+        <% if(typeof tasks !== undefined) { %>
+            
+            <% for(let task of tasks) {%>
+        
+                <div class="item__task">
+        
+                    <form action="/delete" method="post">
+                        <button type="submit" class="delete" value=<%= task.id %> name="taskId"><span class="material-symbols-outlined">delete</span></button>
+                    </form>    
+            
+                    <form class="item__taskEdit" action="/edit" method="post" >
+                        <input type="hidden" name="taskId" value=<%= task.id %>>
+                        <input type="text" class="unselectable" name="updatedTask" value="<%= task.title %>"> 
+                        <button type="button"><span class="material-symbols-outlined edit">edit</span></button>
+                    </form>
+            
+                </div>
+                
+        
+            <% } %>
+
+        <% } %>
+
+        <form action="/add" method="post" class="item__add">
+            <input type="text" name="newTask"> 
+            <label>New Item</label>
+            <button type="submit">+</button>
+        </form>
+    </div>
+
+    <script>
+
+        document.addEventListener("click",clickHandler);
+
+        function clickHandler() {
+            var target = event.target;
+            var targetParent = event.target.parentNode;
+            var targetParentForm = target.closest('form');
+            var targetInputField = targetParentForm.querySelector(".item__taskEdit input[type='text']");
+
+            if(target.classList.contains("edit")){
+
+            targetParentForm.querySelector(".item__taskEdit button span").innerHTML="done";
+
+            targetInputField.classList.remove("unselectable");
+            targetInputField.focus();
+            targetInputField.selectionStart = targetInputField.value.length;
+
+            target.classList.remove("edit");
+
+            setTimeout(function () {
+                targetParent.type = "submit";
+            } , "0.1");
+
+            }
+        }
+    </script>
+</body>
+
+<%- include('partials/footer.ejs'); %>
