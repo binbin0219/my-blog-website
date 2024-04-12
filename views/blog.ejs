@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="./styles/blog.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</head>
+
+<body>
+    <div class="bar">
+        <img src="./assets/images/367576_blogger_blog_blogging_google_icon.png">
+        <h1>Welcome! <%= user.username %>
+        </h1>
+    </div>
+    <div class="middle">
+        <form class="create-post" action="/create-post" method="post">
+            <h1>Got Someting to Share?</h1>
+            <input type="hidden" name="userId" value=<%=user.user_id %> >
+            <input name="title" required>
+            <textarea name="content" rows="5" required></textarea>
+            <button type="submit">
+                <img src="./assets/images/9110878_file_create_icon.png"
+                    style="height: 17px; transform: translate(0,2px); pointer-events: none;">
+                Create
+            </button>
+        </form>
+
+        <div class="post-container">
+            <h1 style="text-align: center;">Blog Posts</h1>
+            <% if (typeof post !==undefined) { %>
+                <% for( let post of posts) { %>
+                    <div class="post <%= likes.some(like => (like.post_id === post.post_id) && (like.user_id === user.user_id)) ? " liked": "" %> ">
+                        <p class="postId" style="display: none;">
+                            <%= post.post_id %>
+                        </p>
+                        <h1 class="title">
+                            <%= post.title %>
+                        </h1>
+                        <p>
+                            <%= post.date %>
+                        </p>
+                        <p class="content">
+                            <%= post.content %>
+                        </p>
+                        <p>By: <%= post.username %>
+                        </p>
+                        <div class="buttons">
+                            <button
+                                style="background-color: rgba(64, 147, 255, 0.774); font-size: 1.1rem; color: black;"
+                                class="like-button">
+                                <img src=<%=likes.some(like => (like.post_id === post.post_id) && (like.user_id === user.user_id)) ?
+                                "./assets/images/8542029_heart_love_like_icon.png" :
+                                "./assets/images/3643770_favorite_heart_like_likes_love_icon.png" %>
+                                style="height: 17px; transform: translate(0,2px); pointer-events: none;"
+                                >
+
+                                <% likeCounter=0; %>
+                                    <% for(like of likes) { %>
+                                        <% like.post_id===post.post_id ? likeCounter++ : null %>
+                                            <% } %>
+                                                Like (<%= likeCounter %>)
+                            </button>
+                            <% if (user.user_id===post.user_id) { %>
+                                <button
+                                    style="background-color: rgba(0, 92, 212, 0.774); font-size: 1.1rem; color: black;">
+                                    <img src="./assets/images/8207886_pen_edit_pencil_education_create_icon.png"
+                                        style="height: 17px; transform: translate(0,2px); pointer-events: none;">
+                                    Edit
+                                </button>
+                                <button class="hidden"
+                                    style="background-color: green; font-size: 1.1rem; color: black;">
+                                    <img src="./assets/images/352323_done_icon.png"
+                                        style="height: 17px; transform: translate(0,2px); pointer-events: none;">
+                                    Done
+                                </button>
+                                <button style="background-color: red; font-size: 1.1rem; color: black;">
+                                    <img src="./assets/images/8664938_trash_can_delete_remove_icon.png"
+                                        style="height: 17px; transform: translate(0,2px); pointer-events: none;">
+                                    Delete
+                                </button>
+                                <% } %>
+                        </div>
+                    </div>
+                    <% } %>
+                        <% } %>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('click', postActionsHandler);
+
+        async function postActionsHandler(event) {
+            var buttonsDiv = event.target.parentElement;
+            var postDiv = buttonsDiv.parentElement;
+            var targetImgTag = event.target.querySelector("img");
+
+            switch (event.target.innerText.match(/[a-zA-Z]+/)[0]) { //extract only alphabet character
+                case "Edit":
+                    editMode(postDiv, buttonsDiv, event.target, "on");
+                    break;
+
+                case "Done":
+                    await editMode(postDiv, buttonsDiv, event.target, "off");
+                    break;
+
+                case "Delete":
+                    await deletePost(postDiv);
+                    break;
+
+                case "Like":
+                    if(isThisPostLiked(postDiv)) {
+                        unLikePost(postDiv);
+                        deleteLikeInDatabase(postDiv);
+                    } else {
+                        likePost(postDiv);
+                        likePostInDatabase(postDiv);
+                    }
+            }
+        }
+
+
+        async function editMode(postDiv, buttonsDiv, buttonClicked, editSwitch) {
+            var nextButtonToShow = buttonsDiv.querySelector(".hidden");
+            var title = postDiv.querySelector(".title");
+            var content = postDiv.querySelector(".content");
+            var postId = postDiv.querySelector(".postId").innerHTML;
+
+            switch (editSwitch) {
+                case "on":
+                    title.contentEditable = true;
+                    title.classList.add("editMode");
+                    content.contentEditable = true;
+                    content.classList.add("editMode");
+                    buttonClicked.classList.add("hidden");
+                    nextButtonToShow.classList.remove("hidden");
+                    focusToEndOfText(title);
+                    break;
+
+                case "off":
+                    await updatePostInDatabase(postId, title.innerText, content.innerText);
+                    title.contentEditable = false;
+                    content.contentEditable = false;
+                    title.classList.remove("editMode");
+                    content.classList.remove("editMode");
+                    buttonClicked.classList.add("hidden");
+                    nextButtonToShow.classList.remove("hidden");
+                    break;
+            }
+        }
+
+        function focusToEndOfText(target) {
+            target.focus();
+
+            var range = document.createRange();
+
+            range.selectNodeContents(target);
+
+            range.collapse(false);
+
+            var selection = window.getSelection();
+
+            selection.removeAllRanges();
+
+            selection.addRange(range);
+        }
+
+        function updatePostInDatabase(postId, title, content) {
+            return new Promise((resolve, reject) => {
+                fetch('update-post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        postId: postId,
+                        title: title,
+                        content: content
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => resolve(data.message))
+                    .catch(data => reject(data.message))
+            })
+        }
+
+        async function deletePost(postDiv) {
+            var postId = postDiv.querySelector(".postId").innerHTML;
+
+            await deletePostInDatabase(postId);
+            postDiv.remove();
+        }
+
+        function deletePostInDatabase(postId) {
+            return new Promise((resolve, reject) => {
+                fetch('delete-post', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        postId: postId
+                    })
+                })
+                    .then(response => response.json())
+                    .then(message => resolve(message))
+                    .catch(message => reject(message))
+            })
+        }
+
+        function isThisPostLiked(postDiv) {
+
+            return postDiv.classList.contains("liked");
+        }
+
+        function likePost(postDiv) {
+            var likeButton = postDiv.querySelector(".like-button");
+            var extractedNumber = parseInt(likeButton.innerText.match(/\d+(\.\d+)?/g)[0]);
+
+            postDiv.classList.add("liked");
+            likeButton.innerHTML = "<img src='./assets/images/8542029_heart_love_like_icon.png' style='height: 17px; transform: translate(0,2px); pointer-events: none;'> Like (" + (extractedNumber + 1) + ")";
+        }
+
+        function unLikePost(postDiv) {
+            var likeButton = postDiv.querySelector(".like-button");
+            var extractedNumber = parseInt(likeButton.innerText.match(/\d+(\.\d+)?/g)[0]);
+
+            postDiv.classList.remove("liked");
+            likeButton.innerHTML = "<img src='./assets/images/3643770_favorite_heart_like_likes_love_icon.png' style='height: 17px; transform: translate(0,2px); pointer-events: none;'> Like (" + (extractedNumber - 1) + ")";
+        }
+
+        function likePostInDatabase(postDiv) {
+            var postId = postDiv.querySelector(".postId").innerHTML;
+
+            fetch('like-post', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    postId: postId,
+                    userId: "<%= user.user_id %>",
+                })
+            })
+        }
+
+        function deleteLikeInDatabase(postDiv) {
+            var postId = postDiv.querySelector(".postId");
+
+            fetch('delete-like-post', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    postId: postId.innerHTML,
+                    userId: "<%= user.user_id %>",
+                })
+            })
+        }
+
+    </script>
+</body>
+
+</html>

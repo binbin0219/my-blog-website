@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./styles/signup.css">
+    <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+</head>
+
+<body class="poppins-regular">
+
+    <div class="sign-up">
+        <h1>Sign up</h1>
+        <form class="NameAndPasswordForm" action="/signing-up" method="post">
+            <label>Username</label>
+            <div class="InputFields">
+                <span class="material-symbols-outlined icon"> person</span>
+                <input name="Username" required>
+                <div class="InputFieldBottomLine"></div>
+                <span id="usernameExisted" class="hidden" style="color: red;">Username Existed</span>
+                <span id="usernameRules" class="hidden" style="color: red;">
+                    Username must follow these rules</br>
+                    *Username must contain at least one alphabet character</br>
+                    *Username cannot contain symbol or space</br>
+                    *Username must start with alphabet character</br>
+                    *Username must contain more than 6 characters
+                </span>
+            </div>
+            <label>Password</label>
+            <div class="InputFields">
+                <span class="material-symbols-outlined icon"> lock</span>
+                <input name="Password" type="password" required>
+                <div class="InputFieldBottomLine"></div>
+                <span id="passwordRules" class="hidden" style="color: red;">
+                    Password must follow these rules</br>
+                    *Must contains at least one uppercase character</br>
+                    *Must use number alphabet combination</br>
+                    *Not less than 6 chatracters</br>
+                    *Cannot contain symbols
+                </span>
+            </div>
+            <button type="submit" class="sign-up-button">Sign up</button>
+        </form>
+
+        <div class="alreadyHaveAnAccount">
+            <p>Already have an account?</p>
+            <a href="http://localhost:4000/login">Go to login >></a>
+        </div>
+
+    </div>
+
+    <script>
+
+        inputIconAnimation();
+        signupVerifier();
+
+
+        function inputIconAnimation() {
+            document.querySelectorAll(".InputFields input").forEach(InputField => {
+                InputField.addEventListener('focus', (event) => {
+                    var UserIcon = event.target.parentNode.querySelector("span");
+                    UserIcon.classList.add("IconFocus");
+                })
+
+                InputField.addEventListener('blur', (event) => {
+                    var UserIcon = event.target.parentNode.querySelector("span");
+                    UserIcon.classList.remove("IconFocus");
+                })
+            })
+        }
+
+        function isUserAlreadyExisted() {
+            var username = document.querySelector(".InputFields input[name='Username']").value;
+
+            return new Promise((resolve, reject) => {
+                fetch('verify-username', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username: username })
+                })
+                    .then(response => response.json())
+                    .then(data => resolve(data.isUserAlreadyExisted))
+                    .catch(error => reject(error))
+            })
+
+        }
+
+        async function isUsernameValid() {
+            var username = document.querySelector(".InputFields input[name='Username']").value;
+            var regex = {
+                Symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?\s]+/,
+                Alphabet: /[a-zA-Z]/,
+                Number: /\d/
+            }
+
+            return new Promise((resolve, reject) => {
+                isUserAlreadyExisted()
+                    .then(result => {
+                        if (result === true) {
+                            displayMessage("userExisted"); //show message
+                            resolve(false);
+                        } else {    //must contain alphabet             //must start with alphabet              //cannot contain symbol     //must more than 6                                                       
+                            if (!(regex.Alphabet.test(username)) || !(regex.Alphabet.test(username[0])) || regex.Symbol.test(username) || username.length < 6 || !(regex.Number.test(username))) {
+                                displayMessage("usernameRules");
+                                resolve(false);
+                            } else {
+                                resolve(true);
+                            }
+                        }
+                    })
+                    .catch(error => console.log('function isUserAlreadyExisted error: ' + error))
+            })
+
+        }
+
+
+        function isPasswordValid() {
+
+            var password = document.querySelector(".InputFields input[name='Password']").value;
+            var passwordRulesDiaplayer = document.querySelector("#passwordRules");
+            var valid = true;
+
+            if ((containsUppercase(password) && password.length > 6 && /\d/.test(password) && !(/[\W_]\s/.test(password)))) {
+                valid = true;
+            } else {
+                displayMessage("passwordRules");
+                valid = false;
+            }
+
+            return valid;
+        }
+
+        function containsUppercase(str) {
+            var arr = str.split(''); //convert to array in order to filter uppercase character
+            var upperCaseChar = arr.filter(char => char === char.toUpperCase());
+
+            return upperCaseChar.length > 0;
+        }
+
+        function signupVerifier() {
+            document.querySelector(".NameAndPasswordForm").addEventListener('submit', (event) => {
+
+                event.preventDefault();
+
+                isUsernameValid()
+                    .then(result => {
+                        if (result && isPasswordValid()) { event.target.submit() };
+                    })
+
+            })
+        }
+
+        function displayMessage(name) {
+            var usernameExistedDisplayer = document.querySelector("#usernameExisted").classList;
+            var usernameRulesDisplayer = document.querySelector("#usernameRules").classList;
+            var passwordRulesDiaplayer = document.querySelector("#passwordRules").classList;
+
+            switch (name) {
+                case "userExisted":
+                    usernameExistedDisplayer.remove("hidden");
+                    usernameRulesDisplayer.add("hidden");
+                    passwordRulesDiaplayer.add("hidden");
+                    break;
+
+                case "usernameRules":
+                    usernameExistedDisplayer.add("hidden");
+                    usernameRulesDisplayer.remove("hidden");
+                    passwordRulesDiaplayer.add("hidden");
+                    break;
+
+                case "passwordRules":
+                    usernameExistedDisplayer.add("hidden");
+                    usernameRulesDisplayer.add("hidden");
+                    passwordRulesDiaplayer.remove("hidden");
+                    break;
+            }
+        }
+    </script>
+
+</body>
+
+</html>
