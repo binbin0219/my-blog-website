@@ -61,7 +61,7 @@ app.get('/', async (req, res) => {
             });
         })
     } else {
-        res.status(401).json({message: "user not authorized!"})
+        res.redirect('/login');
     }
 });
 
