@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs"
 import cookieParser from "cookie-parser"
 
 const app = express();
-const port = 4000;
+const port = process.env.PORT || 4000;
 const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
 var user = [];
 var posts = [];
