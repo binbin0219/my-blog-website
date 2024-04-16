@@ -144,6 +144,41 @@ body {
     margin-top: 100px;
 }
 
+.create-comment {
+    
+    textarea {
+            margin-top: 10px;
+            min-height: 15px;
+            resize: none;
+            width: 97%;
+            padding: 10px;
+            border: 0;
+            overflow: hidden;
+            background-color: rgb(164, 164, 164);
+            border-radius: 25px;
+        }
+}
+
+.comments {
+    margin-top: 10px;
+
+    ul {
+        list-style-type: none;
+    }
+
+    .comment {
+       border-radius: 20px;
+       padding: 15px;
+       background-color: rgb(164, 164, 164);
+       width: fit-content;   
+       margin-bottom: 10px;
+    }
+
+    h1 {
+        font-size: 1rem;
+    }
+}
+
 input,
 textarea {
     font-family: inherit;

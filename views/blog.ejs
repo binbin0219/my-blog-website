@@ -39,7 +39,7 @@
             <% if (typeof post !==undefined) { %>
                 <% for( let post of posts) { %>
                     <div class="post <%= likes.some(like => (like.post_id === post.post_id) && (like.user_id === user.user_id)) ? " liked": "" %> ">
-                        <p class="postId" style="display: none;">
+                        <p class="postId hidden">
                             <%= post.post_id %>
                         </p>
                         <h1 class="title">
@@ -53,7 +53,7 @@
                         </p>
                         <p>By: <%= post.username %>
                         </p>
-                        <div class="buttons">
+                        <div class="buttons" onclick="postActionsHandler(event)">
                             <button
                                 style="background-color: rgba(64, 147, 255, 0.774); font-size: 1.1rem; color: black;"
                                 class="like-button">
@@ -68,6 +68,12 @@
                                         <% like.post_id===post.post_id ? likeCounter++ : null %>
                                             <% } %>
                                                 Like (<%= likeCounter %>)
+                            </button>
+                            <button
+                                style="background-color: rgba(0, 92, 212, 0.774); font-size: 1.1rem; color: black;">
+                                <img src="./assets/images/1737374_comment_comments_description_note_notice_icon.png"
+                                    style="height: 17px; transform: translate(0,2px); pointer-events: none;">
+                                Comments
                             </button>
                             <% if (user.user_id===post.user_id) { %>
                                 <button
@@ -89,6 +95,31 @@
                                 </button>
                                 <% } %>
                         </div>
+                        <div class="comment-section hidden">
+                            <form class="create-comment" onsubmit="insertNewComment(event)">
+                                <input name="username" value= <%= user.username %> type="hidden">
+                                <input name="postId" value= <%= post.post_id %> type="hidden">
+                                <textarea oninput="autoExpand(this)" placeholder="Write some comments..." rows="1" name="content" required></textarea>
+                                <div class="buttons">
+                                    <button type="submit" style="background-color: rgba(0, 92, 212, 0.774); font-size: 1.1rem; color: black; margin-top: 0px;">
+                                        <img src=".\assets\images\2849794_plane_paper airplane_send_airplane_multimedia_icon.png"
+                                            style="height: 17px; transform: translate(0,2px); pointer-events: none;">
+                                    </button>
+                                </div>
+                            </form>    
+                            <div class="comments">
+                                <ul>
+                                    <% for(comment of comments) {%>
+                                        <% if (comment.post_id === post.post_id) { %>
+                                            <li class="comment">
+                                                <h1><%= comment.username %></h1>
+                                                <p><%= comment.content %></p>
+                                            </li>
+                                        <% } %>   
+                                    <% } %>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                     <% } %>
                         <% } %>
@@ -96,7 +127,6 @@
     </div>
 
     <script>
-        document.addEventListener('click', postActionsHandler);
 
         async function postActionsHandler(event) {
             var buttonsDiv = event.target.parentElement;
@@ -124,6 +154,10 @@
                         likePost(postDiv);
                         likePostInDatabase(postDiv);
                     }
+
+                case "Comments":
+                    var commentSectionClass = postDiv.querySelector(".comment-section").classList;
+                    commentSectionClass.contains("hidden") ? commentSectionClass.remove("hidden") : commentSectionClass.add("hidden")
             }
         }
 
@@ -267,6 +301,48 @@
             })
         }
 
+        function autoExpand(textarea) {
+                // Reset the height to default to recalculate the scroll height
+                textarea.style.height = 'inherit';
+
+                // Set the height of the textarea to fit its content
+                textarea.style.height = (textarea.scrollHeight - 20) + 'px';
+        }
+
+        function insertNewComment(event) {
+            event.preventDefault();
+
+            const commentList = event.target.parentElement.querySelector(".comments ul");
+            const newComment = document.createElement('li');
+            const username = event.target.elements['username'].value;
+            const postId = event.target.elements['postId'].value;
+            const content = event.target.elements['content'].value;
+            
+            newComment.className = 'comment';
+            newComment.innerHTML = `
+                <h1>${username}</h1>
+                <p>${content}</p>
+            `;
+
+            commentList.insertBefore(newComment, commentList.firstChild);
+            createCommentInDatabase(postId, content);
+            event.target.elements['content'].value = "";
+        }
+
+        function createCommentInDatabase(postId, content) {
+            fetch('create-comment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    postId: postId,
+                    userId: "<%= user.user_id %>",
+                    username: "<%= user.username %>",
+                    content: content
+                })
+            })
+        }
     </script>
 </body>
 

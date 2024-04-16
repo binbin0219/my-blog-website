@@ -11,8 +11,8 @@ const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646
 var user = [];
 var posts = [];
 var likes = [];
-var postsCurrentUserLiked = [];
 var likeCounter = 0;
+var comments = [];
 
 const db = new pg.Client({
     connectionString: "postgres://my_blog_website_user:WRAmhlA7uuwc7n71YIz3mz0imaPD65Cw@dpg-cobasda1hbls73app2og-a.singapore-postgres.render.com/my_blog_website",
@@ -51,13 +51,13 @@ app.get('/', async (req, res) => {
             user = await db.query("SELECT * FROM users WHERE user_id = $1", [decodedToken.userid]);
             posts = await db.query("SELECT * FROM posts ORDER BY post_id DESC");
             likes = await db.query("SELECT * FROM likes");
-            postsCurrentUserLiked = await db.query("SELECT * FROM likes WHERE user_id = $1" , [decodedToken.userid]);
+            comments = await db.query("SELECT * FROM comments ORDER BY comment_id DESC");
             res.render("blog.ejs", {
                 user: user.rows[0],
                 posts: posts.rows,
                 likes: likes.rows,
-                postsCurrentUserLiked: postsCurrentUserLiked.rows,
-                likeCounter: likeCounter
+                likeCounter: likeCounter,
+                comments: comments.rows
             });
         })
     } else {
@@ -197,33 +197,22 @@ app.post('/delete-like-post',(req,res)=> {
     })
 })
 
-//handlers for to do app
-app.post('/edit', async (req, res) => {
+app.post('/create-comment', async (req,res)=> {
 
-    await db.query("UPDATE tasks SET title = $1 WHERE id = $2", [req.body.updatedTask, req.body.taskId]);
+    const commentId = await db.query("SELECT comment_id FROM comments ORDER BY comment_id DESC LIMIT 1");
 
-    res.redirect('/');
-});
-
-app.post('/add', async (req, res) => {
-
-    var result = await db.query("SELECT id FROM tasks");
-
-    if (result.rows[0]) {
-        var values = [result.rows[result.rows.length - 1].id + 1, req.body.newTask];
-    } else {
-        var values = [1, req.body.newTask];
-    }
-
-
-    await db.query("INSERT INTO tasks (id,title) VALUES ($1,$2)", values);
-
-    res.redirect('/');
-})
-
-app.post('/delete', async (req, res) => {
-    await db.query("DELETE FROM tasks WHERE id = $1", [req.body.taskId]);
-    res.redirect('/');
+    db.query("INSERT INTO comments VALUES ($1,$2,$3,$4,$5)",[
+        commentId.rows[0] ? commentId.rows[0].comment_id + 1 : 1,
+        req.body.postId,
+        req.body.userId,
+        req.body.username,
+        req.body.content
+    ])
+    .then(()=> res.status(201).json({message: "comment created successfully"}))
+    .catch( error => {
+        console.log(error);
+        res.status(500).json({message: "Failed to create comment: " + error})
+    })
 })
 
 app.listen(port, () => {
