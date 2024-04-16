@@ -154,10 +154,12 @@
                         likePost(postDiv);
                         likePostInDatabase(postDiv);
                     }
+                    break;
 
                 case "Comments":
                     var commentSectionClass = postDiv.querySelector(".comment-section").classList;
-                    commentSectionClass.contains("hidden") ? commentSectionClass.remove("hidden") : commentSectionClass.add("hidden")
+                    commentSectionClass.contains("hidden") ? commentSectionClass.remove("hidden") : commentSectionClass.add("hidden");
+                    break;
             }
         }
 
