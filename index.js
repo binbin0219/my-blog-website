@@ -135,9 +135,11 @@ app.post('/logging-in', async (req, res) => {
 //handlers for blog app
 app.post('/create-post', async (req,res)=> {
     var currentDate = new Date();
-    var dateString = currentDate.getFullYear() + '-' + (currentDate.getMonth() + 1) + '-' + currentDate.getDay();
+    var dateString = currentDate.getFullYear() + '-' + (currentDate.getMonth() + 1) + '-' + currentDate.getDate();
     var timeString = currentDate.getHours() + ':' + currentDate.getMinutes();
     var currentDateTime = dateString + ' ' + timeString;
+    console.log(timeString);
+   
     const result = await db.query("SELECT post_id FROM posts ORDER BY post_id DESC LIMIT 1");
     const username = await db.query("SELECT username FROM users WHERE user_id = $1",[req.body.userId]);
 
