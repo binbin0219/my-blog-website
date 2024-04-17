@@ -40,6 +40,7 @@ app.get('/sign-up', async (req, res) => {
 
 // Initial_Page
 app.get('/', async (req, res) => {  
+    console.log("A user visited " + req.url + "at " + new Date().toISOString + " from " + req.ip + " using " + req.headers['user-agent'] + " hostname: " + req.hostname);
     const token = req.cookies.jwt;
     
     if(token){
