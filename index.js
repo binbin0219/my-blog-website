@@ -11,7 +11,6 @@ const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646
 var user = [];
 var posts = [];
 var likes = [];
-var likeCounter = 0;
 var comments = [];
 
 const db = new pg.Client({
@@ -53,11 +52,23 @@ app.get('/', async (req, res) => {
             posts = await db.query("SELECT * FROM posts ORDER BY post_id DESC");
             likes = await db.query("SELECT * FROM likes");
             comments = await db.query("SELECT * FROM comments ORDER BY comment_id DESC");
+
+            // Add total likes
+            posts.rows.forEach(post => {
+                const totalLikes = likes.rows.filter(like => like.post_id === post.post_id);
+                post.totalLikes = totalLikes.length;
+            })
+
+            // Add total comments
+            posts.rows.forEach(post => {
+                const totalComments = comments.rows.filter(comment => comment.post_id === post.post_id);
+                post.totalComments = totalComments.length;
+            })
+
             res.render("blog.ejs", {
                 user: user.rows[0],
                 posts: posts.rows,
                 likes: likes.rows,
-                likeCounter: likeCounter,
                 comments: comments.rows
             });
         })

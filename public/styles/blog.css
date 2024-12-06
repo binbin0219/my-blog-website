@@ -5,22 +5,22 @@
 
 html,
 body {
-    background-color: aliceblue;
     font-family: "Poppins", sans-serif;
     font-weight: 400;
     font-style: normal;
+    background-color: #e8e8e8;
 }
 
 .bar {
     position: fixed;
     width: 100%;
     top: 0;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
-    color: white;
+    background-color: white;
+    color: purple;
     display: flex;
     justify-content: space-between;
     padding: 5px 0 5px 0;
+    border-bottom: 3px solid #dbdbdb;
 
     img {
         margin-left: 10px;
@@ -42,9 +42,9 @@ body {
     background-color: white;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    border-radius: 5px;
+    border-radius: 7px;
     padding: 30px;
+    border: 1px solid #d2d2d2;
 }
 
 .create-post h1 {
@@ -52,21 +52,19 @@ body {
 }
 
 .create-post input {
-    width: 93%;
-    background-color: rgb(164, 164, 164);
+    background-color: #e8e8e8;
     border: 0;
     border-radius: 25px;
     font-size: 1.2rem;
     font-weight: bold;
-    padding: 5px 15px 5px 15px;
+    padding: 8px 15px 8px 15px;
     outline: none;
 }
 
 .create-post textarea {
-    width: 93%;
-    margin-top: 10px;
+    width: 100%;
     resize: none;
-    background-color: rgb(164, 164, 164);
+    background-color: #e8e8e8;
     border: 0;
     border-radius: 25px;
     font-size: 1rem;
@@ -76,36 +74,22 @@ body {
 
 .create-post button {
     width: fit-content;
-    margin-top: 10px;
-    margin-left: 5px;
-    background-color: green;
-    border-radius: 5px;
     border: none;
-    padding: 10px;
     color: black;
     font-size: 1.1rem;
 }
 
 /*post-container*/
 .post-container {
-    background-color: white;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    border-radius: 5px;
     display: flex;
     flex-direction: column;
     margin-top: 50px;
-    padding: 30px;
 }
 
 .post {
-    border-bottom: 2px solid black;
+    border: 1px solid #d2d2d2;
     padding-bottom: 20px;
     margin-top: 20px;
-
-    p {
-        font-size: 0.7rem;
-        margin-top: 10px;
-    }
 
     .title {
         font-size: 1.2rem;
@@ -125,11 +109,7 @@ body {
 
     .buttons button {
         width: fit-content;
-        margin-top: 10px;
-        border-radius: 5px;
         border: none;
-        padding: 10px;
-        color: white;
     }
 }
 
@@ -212,4 +192,51 @@ textarea {
         'wght' 400,
         'GRAD' 0,
         'opsz' 24
+}
+
+.post .icon-like {
+    display: block;
+}
+
+.post .icon-liked {
+    display: none;
+}
+
+.post.liked .icon-like {
+    display: none;
+}
+
+.post.liked .icon-liked {
+    display: block;
+}
+
+.post .icon-comment-opened,
+.post .icon-comment-closed {
+    display: none;
+}
+
+.post[data-comment-expanded="true"] .icon-comment-opened,
+.post[data-comment-expanded="false"] .icon-comment-closed {
+    display: block;
+}
+
+.post .edit-button,
+.post .edit-done-button {
+    display: none;
+}
+
+.post[data-post-editing="false"] .edit-button {
+    display: block;
+}
+
+/* post edit mode */
+.post[data-post-editing="true"] {
+    
+    .edit-done-button {
+        display: block;
+    }
+
+    .editing-disabled {
+        display: none;
+    }
 }

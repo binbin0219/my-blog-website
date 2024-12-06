@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="./styles/blog.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
         rel="stylesheet">
@@ -22,32 +23,119 @@
 
         gtag('config', 'G-X1B3TGM8Q0');
     </script>
+
+    <!-- Figaz One Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
 </head>
 
 <body>
     <div class="bar">
-        <img src="./assets/images/367576_blogger_blog_blogging_google_icon.png">
-        <h1>Welcome! <%= user.username %>
+        <h1 class="ms-7 text-[35px]" style="font-family: fugaz one;">Blogify</h1>
+        <h1 class="text-[35px]">Welcome! <%= user.username %>
         </h1>
     </div>
     <div class="middle">
-        <form class="create-post" action="/create-post" method="post">
-            <h1>Got Someting to Share?</h1>
-            <input type="hidden" name="userId" value=<%=user.user_id %> >
-            <input name="title" required>
-            <textarea name="content" rows="5" required></textarea>
-            <button type="submit">
-                <img src="./assets/images/9110878_file_create_icon.png"
-                    style="height: 17px; transform: translate(0,2px); pointer-events: none;">
-                Create
-            </button>
+        <form id="create_post_form" class="create-post h-[105px] overflow-y-hidden relative" action="/create-post" method="post" style="transition: all .5s ease-out;">
+            <div class="flex gap-4 items-center mb-6 w-full">
+                <img class="w-[45px] h-[45px] rounded-full" src="https://ui-avatars.com/api/?background=random&name=<%=user.username%>" alt="">
+                <div class="flex flex-col">
+                    <h4 class="font-bold">Welcome! <%= user.username %></h4>
+                    <h6 class="text-sm">Have something to share?</h6>
+                </div>
+            </div>
+            <div class="pb-[60px]">
+                <div class="flex flex-col w-full">
+                    <div class="flex gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-signature">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" />
+                        </svg>
+                        <h6 class="font-bold">Title</h6>
+                    </div>
+                    <input class="w-full" name="title" placeholder="Got something to say?" type="text" required>
+                </div>
+                <input type="hidden" name="userId" value=<%=user.user_id %> >
+                <div class="flex flex-col w-full gap-2 mt-2">
+                    <div class="flex gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-article">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M3 4m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" />
+                            <path d="M7 8h10" />
+                            <path d="M7 12h10" />
+                            <path d="M7 16h10" />
+                        </svg>
+                        <h6 class="font-bold">Content</h6>
+                    </div>
+                    <textarea name="content" rows="5" required placeholder="Write something..."></textarea>
+                </div>
+            </div>
+            <div class="flex ms-auto gap-5 mt-4 rounded-full p-3 items-center w-fit border-2 bg-green-200 border-green-400 absolute bottom-[20px] end-[20px]">
+                <button id="show_create_post_btn" type="button" class="flex gap-2 items-center" 
+                    onclick="
+                        this.classList.add('hidden');
+                        document.getElementById('create-post-btn-container').classList.remove('hidden');
+                        document.getElementById('create_post_form').classList.remove('h-[105px]');
+                        document.getElementById('create_post_form').classList.add('h-[430px]');
+                    "
+                >
+                    <p class="text-md" style="color: #269950;">Create Post</p>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#269950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 5l0 14" />
+                        <path d="M5 12l14 0" />
+                    </svg>
+                </button>
+                <div id="create-post-btn-container" class="flex gap-5 hidden">
+                    <button type="submit">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-square-rounded-check">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M9 12l2 2l4 -4" />
+                            <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
+                        </svg>
+                    </button>
+                    <button disabled type="button" class="opacity-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-photo-plus">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M15 8h.01" />
+                            <path d="M12.5 21h-6.5a3 3 0 0 1 -3 -3v-12a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v6.5" />
+                            <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l4 4" />
+                            <path d="M14 14l1 -1c.67 -.644 1.45 -.824 2.182 -.54" />
+                            <path d="M16 19h6" />
+                            <path d="M19 16v6" />
+                        </svg>
+                    </button>
+                    <button type="button" 
+                    onclick="
+                        this.parentElement.classList.add('hidden');
+                        document.getElementById('show_create_post_btn').classList.remove('hidden');
+                        document.getElementById('create_post_form').classList.remove('h-[430px]');
+                        document.getElementById('create_post_form').classList.add('h-[105px]');
+                    ">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M18 6l-12 12" />
+                            <path d="M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </form>
 
         <div class="post-container">
             <h1 style="text-align: center;">Blog Posts</h1>
             <% if (typeof post !==undefined) { %>
                 <% for( let post of posts) { %>
-                    <div class="post <%= likes.some(like => (like.post_id === post.post_id) && (like.user_id === user.user_id)) ? " liked": "" %> ">
+                    <div 
+                        data-comment-expanded="false"
+                        data-post-editing = "false"
+                        id="post_<%= post.post_id %>" 
+                        class="
+                        rounded-lg p-4 mb-4 bg-white
+                        post <%= likes.some(like => (like.post_id === post.post_id) && (like.user_id === user.user_id)) ? " liked": "" %> 
+                    ">
                         <p class="postId hidden">
                             <%= post.post_id %>
                         </p>
@@ -62,47 +150,75 @@
                         </p>
                         <p>By: <%= post.username %>
                         </p>
-                        <div class="buttons" onclick="postActionsHandler(event)">
-                            <button
-                                style="background-color: rgba(64, 147, 255, 0.774); font-size: 1.1rem; color: black;"
-                                class="like-button">
-                                <img src=<%=likes.some(like => (like.post_id === post.post_id) && (like.user_id === user.user_id)) ?
-                                "./assets/images/8542029_heart_love_like_icon.png" :
-                                "./assets/images/3643770_favorite_heart_like_likes_love_icon.png" %>
-                                style="height: 17px; transform: translate(0,2px); pointer-events: none;"
-                                >
-
-                                <% likeCounter=0; %>
-                                    <% for(like of likes) { %>
-                                        <% like.post_id===post.post_id ? likeCounter++ : null %>
-                                            <% } %>
-                                                Like (<%= likeCounter %>)
-                            </button>
-                            <button
-                                style="background-color: rgba(0, 92, 212, 0.774); font-size: 1.1rem; color: black;">
-                                <img src="./assets/images/1737374_comment_comments_description_note_notice_icon.png"
-                                    style="height: 17px; transform: translate(0,2px); pointer-events: none;">
-                                Comments
-                            </button>
-                            <% if (user.user_id===post.user_id) { %>
+                        <div class="mt-3 border-t-2 border-gray-200">
+                            <div class="buttons flex gap-5 mt-2 rounded-full p-3 items-center w-fit border-2 bg-slate-100 border-slate-300" onclick="postActionsHandler(event)">
+                                <!-- Like button -->
                                 <button
-                                    style="background-color: rgba(0, 92, 212, 0.774); font-size: 1.1rem; color: black;">
-                                    <img src="./assets/images/8207886_pen_edit_pencil_education_create_icon.png"
-                                        style="height: 17px; transform: translate(0,2px); pointer-events: none;">
-                                    Edit
+                                    data-post-action="like"
+                                    style="color: black;"
+                                    class="like like-button flex gap-2 editing-disabled">
+                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#F9452C" stroke="#F9452C" class="icon icon-tabler icons-tabler-filled icon-tabler-heart icon-liked">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M6.979 3.074a6 6 0 0 1 4.988 1.425l.037 .033l.034 -.03a6 6 0 0 1 4.733 -1.44l.246 .036a6 6 0 0 1 3.364 10.008l-.18 .185l-.048 .041l-7.45 7.379a1 1 0 0 1 -1.313 .082l-.094 -.082l-7.493 -7.422a6 6 0 0 1 3.176 -10.215z" />
+                                    </svg>
+                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F9452C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-heart icon-like">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
+                                    </svg>
+                                    <p class="total-likes"><%= post.totalLikes %></p>
                                 </button>
-                                <button class="hidden"
-                                    style="background-color: green; font-size: 1.1rem; color: black;">
-                                    <img src="./assets/images/352323_done_icon.png"
-                                        style="height: 17px; transform: translate(0,2px); pointer-events: none;">
-                                    Done
+
+                                <!-- Comment button -->
+                                <button 
+                                    data-post-action="open-comments"
+                                    class="comment flex gap-2 editing-disabled"
+                                    style="color: black;">
+                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#2293F9" stroke="#2293F9" class="icon icon-tabler icons-tabler-filled icon-tabler-message icon-comment-opened">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M18 3a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-4.724l-4.762 2.857a1 1 0 0 1 -1.508 -.743l-.006 -.114v-2h-1a4 4 0 0 1 -3.995 -3.8l-.005 -.2v-8a4 4 0 0 1 4 -4zm-4 9h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m2 -4h-8a1 1 0 1 0 0 2h8a1 1 0 0 0 0 -2" />
+                                    </svg>
+                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2293F9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-message icon-comment-closed">
+                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                        <path d="M8 9h8" />
+                                        <path d="M8 13h6" />
+                                        <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z" />
+                                    </svg>
+                                    <p class="total-comments"><%= post.totalComments %></p>
                                 </button>
-                                <button style="background-color: red; font-size: 1.1rem; color: black;">
-                                    <img src="./assets/images/8664938_trash_can_delete_remove_icon.png"
-                                        style="height: 17px; transform: translate(0,2px); pointer-events: none;">
-                                    Delete
-                                </button>
+                                <% if (user.user_id===post.user_id) { %>
+                                    <!-- Edit button -->
+                                    <button
+                                        data-post-action="edit"
+                                        class="edit edit-button editing-disabled">
+                                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-edit icon-edit-post">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                                            <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
+                                            <path d="M16 5l3 3" />
+                                        </svg>
+                                    </button>
+                                    <!-- Done button -->
+                                    <button class="done edit-done-button"
+                                        data-post-action="done">
+                                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-square-rounded-check icon-edit-post-done">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M9 12l2 2l4 -4" />
+                                            <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
+                                        </svg>
+                                    </button>
+                                    <!-- Delete button -->
+                                    <button data-post-action="delete" class="delete editing-disabled">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M4 7l16 0" />
+                                            <path d="M10 11l0 6" />
+                                            <path d="M14 11l0 6" />
+                                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                                        </svg>
+                                    </button>
                                 <% } %>
+                            </div>
                         </div>
                         <div class="comment-section hidden">
                             <form class="create-comment" onsubmit="insertNewComment(event)">
@@ -136,27 +252,29 @@
     </div>
 
     <script>
+        let postData = <%- JSON.stringify(posts) %>;
 
         async function postActionsHandler(event) {
-            var buttonsDiv = event.target.parentElement;
-            var postDiv = buttonsDiv.parentElement;
+            const buttonsDiv = event.target.closest(".buttons");
+            const postDiv = event.target.closest(".post");
             var targetImgTag = event.target.querySelector("img");
 
-            switch (event.target.innerText.match(/[a-zA-Z]+/)[0]) { //extract only alphabet character
-                case "Edit":
+            switch (event.target.dataset.postAction) { //extract only alphabet character
+                case "edit":
                     editMode(postDiv, buttonsDiv, event.target, "on");
                     break;
 
-                case "Done":
+                case "done":
                     await editMode(postDiv, buttonsDiv, event.target, "off");
                     break;
 
-                case "Delete":
+                case "delete":
                     await deletePost(postDiv);
                     break;
 
-                case "Like":
-                    if(isThisPostLiked(postDiv)) {
+                case "like":
+                    const isThisPostLiked = postDiv.classList.contains("liked");
+                    if(isThisPostLiked) {
                         unLikePost(postDiv);
                         deleteLikeInDatabase(postDiv);
                     } else {
@@ -165,9 +283,15 @@
                     }
                     break;
 
-                case "Comments":
-                    var commentSectionClass = postDiv.querySelector(".comment-section").classList;
-                    commentSectionClass.contains("hidden") ? commentSectionClass.remove("hidden") : commentSectionClass.add("hidden");
+                case "open-comments":
+                    let isCommentsExpanded = postDiv.getAttribute("data-comment-expanded") === "true";
+                    isCommentsExpanded = !isCommentsExpanded;
+                    postDiv.setAttribute("data-comment-expanded", isCommentsExpanded);
+                    const commentSectionClass = postDiv.querySelector(".comment-section").classList;
+                    isCommentsExpanded ? commentSectionClass.remove("hidden") : commentSectionClass.add("hidden");
+                    break;
+
+                default:
                     break;
             }
         }
@@ -181,23 +305,21 @@
 
             switch (editSwitch) {
                 case "on":
+                    postDiv.setAttribute("data-post-editing", "true");
                     title.contentEditable = true;
                     title.classList.add("editMode");
                     content.contentEditable = true;
                     content.classList.add("editMode");
-                    buttonClicked.classList.add("hidden");
-                    nextButtonToShow.classList.remove("hidden");
                     focusToEndOfText(title);
                     break;
 
                 case "off":
                     await updatePostInDatabase(postId, title.innerText, content.innerText);
+                    postDiv.setAttribute("data-post-editing", "false");
                     title.contentEditable = false;
                     content.contentEditable = false;
                     title.classList.remove("editMode");
                     content.classList.remove("editMode");
-                    buttonClicked.classList.add("hidden");
-                    nextButtonToShow.classList.remove("hidden");
                     break;
             }
         }
@@ -261,25 +383,26 @@
             })
         }
 
-        function isThisPostLiked(postDiv) {
-
-            return postDiv.classList.contains("liked");
-        }
-
         function likePost(postDiv) {
-            var likeButton = postDiv.querySelector(".like-button");
-            var extractedNumber = parseInt(likeButton.innerText.match(/\d+(\.\d+)?/g)[0]);
-
-            postDiv.classList.add("liked");
-            likeButton.innerHTML = "<img src='./assets/images/8542029_heart_love_like_icon.png' style='height: 17px; transform: translate(0,2px); pointer-events: none;'> Like (" + (extractedNumber + 1) + ")";
+            const postId = postDiv.id.replace("post_", "");
+            const postObject = postData.find(post => post.post_id == postId);
+            if(postObject && postObject.totalLikes !== undefined) {
+                const totalLikesDiaplayer = postDiv.querySelector(".total-likes");
+                postObject.totalLikes++;
+                postDiv.classList.add("liked");
+                totalLikesDiaplayer.innerHTML = `${postObject.totalLikes}`;
+            }
         }
 
         function unLikePost(postDiv) {
-            var likeButton = postDiv.querySelector(".like-button");
-            var extractedNumber = parseInt(likeButton.innerText.match(/\d+(\.\d+)?/g)[0]);
-
-            postDiv.classList.remove("liked");
-            likeButton.innerHTML = "<img src='./assets/images/3643770_favorite_heart_like_likes_love_icon.png' style='height: 17px; transform: translate(0,2px); pointer-events: none;'> Like (" + (extractedNumber - 1) + ")";
+            const postId = postDiv.id.replace("post_", "");
+            const postObject = postData.find(post => post.post_id == postId);
+            if(postObject && postObject.totalLikes !== undefined) {
+                const totalLikesDiaplayer = postDiv.querySelector(".total-likes");
+                postObject.totalLikes--;
+                postDiv.classList.remove("liked");
+                totalLikesDiaplayer.innerHTML = `${postObject.totalLikes}`;
+            }
         }
 
         function likePostInDatabase(postDiv) {
