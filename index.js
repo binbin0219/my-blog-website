@@ -1,9 +1,9 @@
 import express from "express"
 import bodyParser from "body-parser"
-import pg from "pg"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import cookieParser from "cookie-parser"
+import databaseSetup, { runQuery } from "./databaseSetup.js"
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -13,15 +13,7 @@ var posts = [];
 var likes = [];
 var comments = [];
 
-const db = new pg.Client({
-    connectionString: "postgres://my_blog_website_user:WRAmhlA7uuwc7n71YIz3mz0imaPD65Cw@dpg-cobasda1hbls73app2og-a.singapore-postgres.render.com/my_blog_website",
-    ssl: {
-        rejectUnauthorized: false // For self-signed certificates (optional)
-    }
-});
-db.connect()
-.then(()=> {console.log("database connected")})
-.catch((error)=> {console.log(error)})
+const db = await databaseSetup();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -48,28 +40,30 @@ app.get('/', async (req, res) => {
             ?
             res.status(401).json({message: "user not authorized!"})
             :
-            user = await db.query("SELECT * FROM users WHERE user_id = $1", [decodedToken.userid]);
-            posts = await db.query("SELECT * FROM posts ORDER BY post_id DESC");
-            likes = await db.query("SELECT * FROM likes");
-            comments = await db.query("SELECT * FROM comments ORDER BY comment_id DESC");
+            user = await runQuery("SELECT * FROM users WHERE user_id = $1", [decodedToken.userid]);
+            posts = await runQuery("SELECT * FROM posts ORDER BY post_id DESC");
+            likes = await runQuery("SELECT * FROM likes");
+            comments = await runQuery("SELECT * FROM comments ORDER BY comment_id DESC");
+            
+            if(posts) {
+                // Add total likes
+                posts.forEach(post => {
+                    const totalLikes = likes.filter(like => like.post_id === post.post_id);
+                    post.totalLikes = totalLikes.length;
+                })
 
-            // Add total likes
-            posts.rows.forEach(post => {
-                const totalLikes = likes.rows.filter(like => like.post_id === post.post_id);
-                post.totalLikes = totalLikes.length;
-            })
-
-            // Add total comments
-            posts.rows.forEach(post => {
-                const totalComments = comments.rows.filter(comment => comment.post_id === post.post_id);
-                post.totalComments = totalComments.length;
-            })
+                // Add total comments
+                posts.forEach(post => {
+                    const totalComments = comments.filter(comment => comment.post_id === post.post_id);
+                    post.totalComments = totalComments.length;
+                })
+            }
 
             res.render("blog.ejs", {
-                user: user.rows[0],
-                posts: posts.rows,
-                likes: likes.rows,
-                comments: comments.rows
+                user: user[0],
+                posts: posts,
+                likes: likes,
+                comments: comments
             });
         })
     } else {
@@ -79,15 +73,15 @@ app.get('/', async (req, res) => {
 
 //handlers for sign up
 app.post("/signing-up", async (req, res) => {
-    const users = await db.query("SELECT * FROM users");
+    const users = await runQuery("SELECT * FROM users");
     const hashedPassword = await bcrypt.hash(req.body.Password,10);    
 
-    await db.query("INSERT INTO users VALUES ($1,$2,$3) RETURNING *",
-        [users.rows[0] ? users.rows[users.rows.length - 1].user_id + 1 : 1, req.body.Username, hashedPassword])
+    await runQuery("INSERT INTO users VALUES ($1,$2,$3) RETURNING *",
+        [users[0] ? users[users.length - 1].user_id + 1 : 1, req.body.Username, hashedPassword])
         .then((insertedRow)=> {
             const maxAge = 3 * 60 * 60;
             const token = jwt.sign(
-                {userid: insertedRow.rows[0].user_id, username: insertedRow.rows[0].username},
+                {userid: insertedRow[0].user_id, username: insertedRow[0].username},
                 jwtSecret,
                 {expiresIn: maxAge}
             );
@@ -101,16 +95,16 @@ app.post("/signing-up", async (req, res) => {
 })
 
 app.post("/verify-username", async (req, res) => {
-    const foundUser = await db.query("SELECT * FROM users WHERE username = $1", [req.body.username])
-    if (foundUser.rows[0]) { res.json({ isUserAlreadyExisted: true }); console.log("user existed") } else { res.json({ isUserAlreadyExisted: false }); console.log("user not exist") }
+    const foundUser = await runQuery("SELECT * FROM users WHERE username = $1", [req.body.username])
+    if (foundUser[0]) { res.json({ isUserAlreadyExisted: true }); console.log("user existed") } else { res.json({ isUserAlreadyExisted: false }); console.log("user not exist") }
 })
 
 app.post("/verify-password", async (req, res) => {
-    const foundPassword = await db.query("SELECT password FROM users WHERE username = $1", [req.body.username]);
+    const foundPassword = await runQuery("SELECT password FROM users WHERE username = $1", [req.body.username]);
 
-    if (foundPassword.rows[0]) {//check if the coresponding user's password in database is found or not
+    if (foundPassword[0]) {//check if the coresponding user's password in database is found or not
 
-        bcrypt.compare(req.body.password,foundPassword.rows[0].password).then((result)=> {
+        bcrypt.compare(req.body.password,foundPassword[0].password).then((result)=> {
             result
             ?
             res.json({ isPasswordCorrect: true }) //password correct
@@ -127,11 +121,11 @@ app.post("/verify-password", async (req, res) => {
 
 //handlers for login
 app.post('/logging-in', async (req, res) => {
-    await db.query("SELECT * FROM users WHERE username = $1",[req.body.Username])
+    await runQuery("SELECT * FROM users WHERE username = $1",[req.body.Username])
     .then((foundUser) => {
         const maxAge = 3 * 60 * 60;
         const token = jwt.sign(
-            {userid: foundUser.rows[0].user_id, username: foundUser.rows[0].username},
+            {userid: foundUser[0].user_id, username: foundUser[0].username},
             jwtSecret,
             {expiresIn: maxAge}
         );
@@ -151,23 +145,23 @@ app.post('/create-post', async (req,res)=> {
     var timeString = currentDate.getHours() + ':' + currentDate.getMinutes();
     var currentDateTime = dateString + ' ' + timeString;
 
-    const result = await db.query("SELECT post_id FROM posts ORDER BY post_id DESC LIMIT 1");
-    const username = await db.query("SELECT username FROM users WHERE user_id = $1",[req.body.userId]);
+    const result = await runQuery("SELECT post_id FROM posts ORDER BY post_id DESC LIMIT 1");
+    const username = await runQuery("SELECT username FROM users WHERE user_id = $1",[req.body.userId]);
 
-    await db.query("INSERT INTO posts VALUES($1,$2,$3,$4,$5,$6)", [
+    await runQuery("INSERT INTO posts VALUES($1,$2,$3,$4,$5,$6)", [
         req.body.userId,
-        result.rows[0] ? result.rows[0].post_id + 1 : 1,
+        result[0] ? result[0].post_id + 1 : 1,
         req.body.title,
         req.body.content,
         currentDateTime,
-        username.rows[0].username
+        username[0].username
     ]);
 
     res.redirect('/');
 })
 
 app.post('/update-post', async (req,res)=> {
-    db.query("UPDATE posts SET title = $1, content = $2 WHERE post_id = $3",
+    runQuery("UPDATE posts SET title = $1, content = $2 WHERE post_id = $3",
     [req.body.title, req.body.content, req.body.postId])
     .then(()=> res.status(200).json({message: "Update successful"}))
     .catch(error => {
@@ -177,7 +171,7 @@ app.post('/update-post', async (req,res)=> {
 })
 
 app.post('/delete-post',(req,res) =>{
-    db.query("DELETE FROM posts WHERE post_id = $1" , [req.body.postId])
+    runQuery("DELETE FROM posts WHERE post_id = $1" , [req.body.postId])
     .then(()=> res.status(201).json({message: "Delete successfully"}))
     .catch( error => {
         console.log(error);
@@ -186,10 +180,10 @@ app.post('/delete-post',(req,res) =>{
 })
 
 app.post('/like-post',async (req,res)=> {
-    const result = await db.query("SELECT like_id FROM likes ORDER BY like_id DESC LIMIT 1");
+    const result = await runQuery("SELECT like_id FROM likes ORDER BY like_id DESC LIMIT 1");
 
-    db.query("INSERT INTO likes VALUES($1,$2,$3)" , [
-        result.rows[0] ? result.rows[0].like_id + 1 : 1,
+    runQuery("INSERT INTO likes VALUES($1,$2,$3)" , [
+        result[0] ? result[0].like_id + 1 : 1,
         req.body.userId,
         req.body.postId
     ])
@@ -202,7 +196,7 @@ app.post('/like-post',async (req,res)=> {
 
 app.post('/delete-like-post',(req,res)=> {
 
-    db.query("DELETE FROM likes WHERE post_id = $1 AND user_id = $2" , [req.body.postId, req.body.userId])
+    runQuery("DELETE FROM likes WHERE post_id = $1 AND user_id = $2" , [req.body.postId, req.body.userId])
     .then(()=> res.status(201).json({message: "Delete like post successfully"}))
     .catch( error => {
         console.log(error);
@@ -212,10 +206,10 @@ app.post('/delete-like-post',(req,res)=> {
 
 app.post('/create-comment', async (req,res)=> {
 
-    const commentId = await db.query("SELECT comment_id FROM comments ORDER BY comment_id DESC LIMIT 1");
+    const commentId = await runQuery("SELECT comment_id FROM comments ORDER BY comment_id DESC LIMIT 1");
 
-    db.query("INSERT INTO comments VALUES ($1,$2,$3,$4,$5)",[
-        commentId.rows[0] ? commentId.rows[0].comment_id + 1 : 1,
+    runQuery("INSERT INTO comments VALUES ($1,$2,$3,$4,$5)",[
+        commentId[0] ? commentId[0].comment_id + 1 : 1,
         req.body.postId,
         req.body.userId,
         req.body.username,

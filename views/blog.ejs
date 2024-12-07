@@ -126,7 +126,7 @@
 
         <div class="post-container">
             <h1 style="text-align: center;">Blog Posts</h1>
-            <% if (typeof post !==undefined) { %>
+            <% if (typeof posts !==undefined && posts.length > 0) { %>
                 <% for( let post of posts) { %>
                     <div 
                         data-comment-expanded="false"
@@ -247,7 +247,11 @@
                         </div>
                     </div>
                     <% } %>
-                        <% } %>
+                    <% } else { %>
+                        <div id="no_posts_message" class="p-5 bg-white border-2 border-gray-200 rounded-lg mt-5">
+                            <h3 style="text-align: center;">No posts yet</h3>
+                        </div>
+                    <% } %>
         </div>
     </div>
 
