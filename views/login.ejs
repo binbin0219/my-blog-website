@@ -70,15 +70,15 @@
             var username = document.querySelector(".InputFields input[name='Username']").value;
 
             return new Promise((resolve, reject) => {
-                fetch('verify-username', {
+                fetch('verify-account-name', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username: username })
+                    body: JSON.stringify({ accountName: username })
                 })
                     .then(response => response.json())
-                    .then(data => resolve(data.isUserAlreadyExisted))
+                    .then(data => resolve(data.isAccountNameAlreadyExisted))
                     .catch(error => reject(error))
             })
 

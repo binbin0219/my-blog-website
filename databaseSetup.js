@@ -18,13 +18,17 @@ const createTableQueries = [
     "post_id" INTEGER,
     "user_id" INTEGER,
     "username" VARCHAR(200),
-    "content" VARCHAR(500)
+    "content" VARCHAR(500),
+    FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE
   );`,
 
   `CREATE TABLE IF NOT EXISTS "public"."likes" (
     "like_id" SERIAL PRIMARY KEY,
     "user_id" INTEGER,
-    "post_id" INTEGER
+    "post_id" INTEGER,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE,
+    FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE
   );`,
 
   `CREATE TABLE IF NOT EXISTS "public"."posts" (
@@ -33,17 +37,14 @@ const createTableQueries = [
     "title" VARCHAR(100),
     "content" VARCHAR(500),
     "date" VARCHAR(50),
-    "username" VARCHAR(100)
-  );`,
-
-  `CREATE TABLE IF NOT EXISTS "public"."tasks" (
-    "task_id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER,
-    "title" VARCHAR(200)
+    "username" VARCHAR(100),
+    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE
   );`,
 
   `CREATE TABLE IF NOT EXISTS "public"."users" (
     "user_id" SERIAL PRIMARY KEY,
+    "account_name" VARCHAR(50),
+    "gender" VARCHAR(20),
     "username" VARCHAR(50),
     "password" VARCHAR(200)
   );`

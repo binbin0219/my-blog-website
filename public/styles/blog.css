@@ -11,27 +11,6 @@ body {
     background-color: #e8e8e8;
 }
 
-.bar {
-    position: fixed;
-    width: 100%;
-    top: 0;
-    background-color: white;
-    color: purple;
-    display: flex;
-    justify-content: space-between;
-    padding: 5px 0 5px 0;
-    border-bottom: 3px solid #dbdbdb;
-
-    img {
-        margin-left: 10px;
-        width: 50px;
-    }
-
-    h1 {
-        margin-right: 20px;
-    }
-}
-
 .middle {
     margin: 70px auto auto auto;
     width: 700px;

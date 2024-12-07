@@ -4,16 +4,28 @@ import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import cookieParser from "cookie-parser"
 import databaseSetup, { runQuery } from "./databaseSetup.js"
+import fs from "fs"
+import path from "path"
+import { fileURLToPath } from 'url';
+
+// Connect to the database
+const db = await databaseSetup();
+
+// Get __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const app = express();
 const port = process.env.PORT || 4000;
 const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
+const avatarLink = 'https://api.dicebear.com/6.x/pixel-art/svg?seed=';
+const userAvatarDirPath = path.join(__dirname, 'storage', 'userAvatars');
 var user = [];
 var posts = [];
 var likes = [];
 var comments = [];
 
-const db = await databaseSetup();
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -33,6 +45,8 @@ app.get('/sign-up', async (req, res) => {
 app.get('/', async (req, res) => {  
     console.log("A user visited " + req.url + "at " + new Date().toISOString + " from " + req.ip + " using " + req.headers['user-agent'] + " hostname: " + req.hostname);
     const token = req.cookies.jwt;
+    let relatedUsersId = [];
+    let relatedUsers = [];
     
     if(token){
         jwt.verify(token, jwtSecret, async (err, decodedToken)=> {
@@ -41,29 +55,74 @@ app.get('/', async (req, res) => {
             res.status(401).json({message: "user not authorized!"})
             :
             user = await runQuery("SELECT * FROM users WHERE user_id = $1", [decodedToken.userid]);
+            user[0].password = null;
+            user[0].accountName = null;
             posts = await runQuery("SELECT * FROM posts ORDER BY post_id DESC");
             likes = await runQuery("SELECT * FROM likes");
             comments = await runQuery("SELECT * FROM comments ORDER BY comment_id DESC");
-            
+
+            // Add main user data
+            const filePath = path.join(userAvatarDirPath, `user_avatar_${user[0].user_id}.jpg`);
+            if(fs.existsSync(filePath)) {
+                const avatarBuffer = fs.readFileSync(filePath);
+                const base64avatar = Buffer.from(avatarBuffer).toString('base64');
+                const avatar = `data:image/jpeg;base64,${base64avatar}`
+                user[0].avatar = avatar
+            }
+
             if(posts) {
-                // Add total likes
-                posts.forEach(post => {
+                // Add users id related to posts
+                posts.forEach( async (post) => {
+                    // Add total likes
                     const totalLikes = likes.filter(like => like.post_id === post.post_id);
                     post.totalLikes = totalLikes.length;
-                })
-
-                // Add total comments
-                posts.forEach(post => {
+    
+                    // Add total comments
                     const totalComments = comments.filter(comment => comment.post_id === post.post_id);
                     post.totalComments = totalComments.length;
+
+                    const isUserAdded = relatedUsers.find(user => user.user_id === post.user_id);
+                    if(isUserAdded) return;
+                    relatedUsersId.push(post.user_id);
                 })
             }
 
+            if(comments) {
+                // Add users related to comments
+                comments.forEach(async (comment) => {
+                    const isUserAdded = relatedUsers.find(user => user.user_id === comment.user_id);
+                    if(isUserAdded) return;
+                    relatedUsersId.push(comment.user_id);
+                })
+            }
+
+            // Get all users data from relatedUsersId
+            if(relatedUsersId.length > 0){
+                let queryCondition = relatedUsersId.map((_, index) => `$${index + 1}`).join(", ");
+                const queryString = `SELECT * FROM users WHERE user_id IN (${queryCondition})`;
+                const foundUsers = await runQuery(queryString, relatedUsersId);
+                if(!foundUsers) return;
+                foundUsers.forEach((user) => {
+                    user.password = null;
+                    user.accountName = null;
+
+                    const filePath = path.join(userAvatarDirPath, `user_avatar_${user.user_id}.jpg`);
+                    if(!fs.existsSync(filePath)) return;
+
+                    const avatarBuffer = fs.readFileSync(filePath);
+                    const base64avatar = Buffer.from(avatarBuffer).toString('base64');
+                    user.avatar = `data:image/jpeg;base64,${base64avatar}`
+
+                    relatedUsers.push(user);
+                })
+            }
+            
             res.render("blog.ejs", {
                 user: user[0],
                 posts: posts,
                 likes: likes,
-                comments: comments
+                comments: comments,
+                relatedUsers: relatedUsers
             });
         })
     } else {
@@ -75,28 +134,60 @@ app.get('/', async (req, res) => {
 app.post("/signing-up", async (req, res) => {
     const users = await runQuery("SELECT * FROM users");
     const hashedPassword = await bcrypt.hash(req.body.Password,10);    
+    const nextUserId = users[0] ? users[users.length - 1].user_id + 1 : 1;
 
-    await runQuery("INSERT INTO users VALUES ($1,$2,$3) RETURNING *",
-        [users[0] ? users[users.length - 1].user_id + 1 : 1, req.body.Username, hashedPassword])
-        .then((insertedRow)=> {
-            const maxAge = 3 * 60 * 60;
-            const token = jwt.sign(
-                {userid: insertedRow[0].user_id, username: insertedRow[0].username},
-                jwtSecret,
-                {expiresIn: maxAge}
-            );
-            res.cookie("jwt", token, {
-                httpOnly: true,
-                maxAge: maxAge * 1000,
-            });
-        })
+    try {
+        // Generate a random avatar base on username
+        const avatarJSON = await fetch(`${avatarLink}${req.body.Username}`);
+        const avatarBlob = await avatarJSON.blob();
+        const avatarBuffer = Buffer.from(await avatarBlob.arrayBuffer());
 
-    res.render('sign-up-successful.ejs');
+        // Define the output directory and file name
+        const outputFile = path.join(userAvatarDirPath, `user_avatar_${nextUserId}.jpg`);
+
+        // Ensure the directory exists
+        if (!fs.existsSync(userAvatarDirPath)) {
+            fs.mkdirSync(userAvatarDirPath, { recursive: true });
+        }
+
+        // Write the SVG data to the file
+        fs.writeFileSync(outputFile, avatarBuffer);
+
+        // Insert the new user
+        const insertedRow = await runQuery("INSERT INTO users VALUES ($1,$2,$3,$4,$5) RETURNING *", [
+            nextUserId,
+            req.body.accountName, 
+            req.body.Gender,
+            req.body.Username, 
+            hashedPassword,
+        ])
+
+        // Generate a JWT
+        const maxAge = 3 * 60 * 60;
+        const token = jwt.sign(
+            {userid: insertedRow[0].user_id, username: insertedRow[0].username},
+            jwtSecret,
+            {expiresIn: maxAge}
+        );
+
+        // Set the cookie
+        res.cookie("jwt", token, {
+            httpOnly: true,
+            maxAge: maxAge * 1000,
+        });
+
+        res.render('sign-up-successful.ejs');
+    } catch (error) {
+        console.log(error);
+        // Redirect to sign-up page
+        res.redirect('/sign-up');
+    }
+
 })
 
-app.post("/verify-username", async (req, res) => {
-    const foundUser = await runQuery("SELECT * FROM users WHERE username = $1", [req.body.username])
-    if (foundUser[0]) { res.json({ isUserAlreadyExisted: true }); console.log("user existed") } else { res.json({ isUserAlreadyExisted: false }); console.log("user not exist") }
+app.post("/verify-account-name", async (req, res) => {
+    const foundUser = await runQuery("SELECT * FROM users WHERE username = $1", [req.body.accountName]);
+    if (foundUser[0]) { res.json({ isAccountNameAlreadyExisted: true }); console.log("user existed") } else { res.json({ isAccountNameAlreadyExisted: false }); console.log("user not exist") }
 })
 
 app.post("/verify-password", async (req, res) => {

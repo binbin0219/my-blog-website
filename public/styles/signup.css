@@ -23,7 +23,7 @@ html {
     padding-bottom: 50px;
   }
   
-  .NameAndPasswordForm {
+  .sign-up-form {
     display: flex;
     flex-direction: column;
     width: 70%;

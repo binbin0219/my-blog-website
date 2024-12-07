@@ -19,19 +19,25 @@
 
     <div class="sign-up">
         <h1>Sign up</h1>
-        <form class="NameAndPasswordForm" action="/signing-up" method="post">
+        <form class="sign-up-form" action="/signing-up" method="post">
             <label>Username</label>
             <div class="InputFields">
                 <span class="material-symbols-outlined icon"> person</span>
                 <input name="Username" required>
                 <div class="InputFieldBottomLine"></div>
                 <span id="usernameExisted" class="hidden" style="color: red;">Username Existed</span>
-                <span id="usernameRules" class="hidden" style="color: red;">
-                    Username must follow these rules</br>
-                    *Username must contain at least one alphabet character</br>
-                    *Username cannot contain symbol or space</br>
-                    *Username must start with alphabet character</br>
-                    *Username must contain more than 6 characters
+            </div>
+            <label>Account Name</label>
+            <div class="InputFields">
+                <span class="material-symbols-outlined icon"> person</span>
+                <input name="accountName" required>
+                <div class="InputFieldBottomLine"></div>
+                <span id="accountNameRules" class="hidden" style="color: red; font-size: 12px;">
+                    Account Name must follow these rules</br>
+                    *Account Name must contain at least one alphabet character</br>
+                    *Account Name cannot contain symbol or space</br>
+                    *Account Name must start with alphabet character</br>
+                    *Account Name must contain more than 6 characters
                 </span>
             </div>
             <label>Password</label>
@@ -47,7 +53,32 @@
                     *Cannot contain symbols
                 </span>
             </div>
-            <button type="submit" class="sign-up-button">Sign up</button>
+            <!-- Gender Checkbox -->
+            <label>Gender</label>
+            <div style="display: flex; justify-content: space-around; margin-top: 10px;">
+                <div class="gender-checkbox" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="	#2986cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-mars">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M10 14m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" />
+                        <path d="M19 5l-5.4 5.4" />
+                        <path d="M19 5l-5 0" />
+                        <path d="M19 5l0 5" />
+                    </svg>
+                    <p style="margin: 0;">Male</p>
+                    <input checked type="radio" name="Gender" value="Male" required>
+                </div>
+                <div class="gender-checkbox" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c90076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-venus">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M12 9m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" />
+                        <path d="M12 14l0 7" />
+                        <path d="M9 18l6 0" />
+                    </svg>
+                    <p style="margin: 0;">Female</p>
+                    <input type="radio" name="Gender" value="Female" required>
+                </div>
+            </div>
+            <button type="submit" class="sign-up-button" style="margin-top: 30px;">Sign up</button>
         </form>
 
         <div class="alreadyHaveAnAccount">
@@ -77,26 +108,26 @@
             })
         }
 
-        function isUserAlreadyExisted() {
-            var username = document.querySelector(".InputFields input[name='Username']").value;
+        function isAccountNameAlreadyExisted() {
+            var accountName = document.querySelector(".InputFields input[name='accountName']").value;
 
             return new Promise((resolve, reject) => {
-                fetch('verify-username', {
+                fetch('verify-account-name', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ username: username })
+                    body: JSON.stringify({ accountName: accountName })
                 })
                     .then(response => response.json())
-                    .then(data => resolve(data.isUserAlreadyExisted))
+                    .then(data => resolve(data.isAccountNameAlreadyExisted))
                     .catch(error => reject(error))
             })
 
         }
 
-        async function isUsernameValid() {
-            var username = document.querySelector(".InputFields input[name='Username']").value;
+        async function checkAccountNameValidity() {
+            var accountName = document.querySelector(".InputFields input[name='accountName']").value;
             var regex = {
                 Symbol: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?\s]+/,
                 Alphabet: /[a-zA-Z]/,
@@ -104,21 +135,21 @@
             }
 
             return new Promise((resolve, reject) => {
-                isUserAlreadyExisted()
+                isAccountNameAlreadyExisted()
                     .then(result => {
                         if (result === true) {
-                            displayMessage("userExisted"); //show message
+                            displayMessage("accountNameExist"); //show message
                             resolve(false);
                         } else {    //must contain alphabet             //must start with alphabet              //cannot contain symbol     //must more than 6                                                       
-                            if (!(regex.Alphabet.test(username)) || !(regex.Alphabet.test(username[0])) || regex.Symbol.test(username) || username.length < 6 || !(regex.Number.test(username))) {
-                                displayMessage("usernameRules");
+                            if (!(regex.Alphabet.test(accountName)) || !(regex.Alphabet.test(accountName[0])) || regex.Symbol.test(accountName) || accountName.length < 6 || !(regex.Number.test(accountName))) {
+                                displayMessage("accountNameRules");
                                 resolve(false);
                             } else {
                                 resolve(true);
                             }
                         }
                     })
-                    .catch(error => console.log('function isUserAlreadyExisted error: ' + error))
+                    .catch(error => console.log('function isAccountNameAlreadyExisted error: ' + error))
             })
 
         }
@@ -147,40 +178,44 @@
             return upperCaseChar.length > 0;
         }
 
-        function signupVerifier() {
-            document.querySelector(".NameAndPasswordForm").addEventListener('submit', (event) => {
-
+        async function signupVerifier() {
+            document.querySelector(".sign-up-form").addEventListener('submit', async (event) => {
                 event.preventDefault();
 
-                isUsernameValid()
-                    .then(result => {
-                        if (result && isPasswordValid()) { event.target.submit() };
-                    })
+                // Check username
 
+                //check account name
+                const isAccountNameValid = await checkAccountNameValidity();
+                if(!isAccountNameValid) return;
+
+                //check password
+                if (!isPasswordValid()) return;
+
+                event.target.submit();
             })
         }
 
         function displayMessage(name) {
-            var usernameExistedDisplayer = document.querySelector("#usernameExisted").classList;
-            var usernameRulesDisplayer = document.querySelector("#usernameRules").classList;
+            var accountNameExistedDisplayer = document.querySelector("#usernameExisted").classList;
+            var accountNameRulesDisplayer = document.querySelector("#accountNameRules").classList;
             var passwordRulesDiaplayer = document.querySelector("#passwordRules").classList;
 
             switch (name) {
-                case "userExisted":
-                    usernameExistedDisplayer.remove("hidden");
-                    usernameRulesDisplayer.add("hidden");
+                case "accountNameExist":
+                    accountNameExistedDisplayer.remove("hidden");
+                    accountNameRulesDisplayer.add("hidden");
                     passwordRulesDiaplayer.add("hidden");
                     break;
 
-                case "usernameRules":
-                    usernameExistedDisplayer.add("hidden");
-                    usernameRulesDisplayer.remove("hidden");
+                case "accountNameRules":
+                    accountNameExistedDisplayer.add("hidden");
+                    accountNameRulesDisplayer.remove("hidden");
                     passwordRulesDiaplayer.add("hidden");
                     break;
 
                 case "passwordRules":
-                    usernameExistedDisplayer.add("hidden");
-                    usernameRulesDisplayer.add("hidden");
+                    accountNameExistedDisplayer.add("hidden");
+                    accountNameRulesDisplayer.add("hidden");
                     passwordRulesDiaplayer.remove("hidden");
                     break;
             }

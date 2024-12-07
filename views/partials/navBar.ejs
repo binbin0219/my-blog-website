@@ -1,0 +1,28 @@
+<style>
+    .bar {
+        position: fixed;
+        width: 100%;
+        top: 0;
+        background-color: white;
+        color: purple;
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0 5px 0;
+        border-bottom: 3px solid #dbdbdb;
+
+        img {
+            margin-left: 10px;
+            width: 50px;
+        }
+
+        h1 {
+            margin-right: 20px;
+        }
+    }
+</style>
+
+<div class="bar">
+    <h1 class="ms-7 text-[35px]" style="font-family: fugaz one;">Blogify</h1>
+    <h1 class="text-[35px]">Welcome! <%= user.username %>
+    </h1>
+</div>
