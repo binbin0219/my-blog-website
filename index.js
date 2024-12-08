@@ -7,22 +7,15 @@ import databaseSetup, { runQuery } from "./databaseSetup.js"
 import fs from "fs"
 import path from "path"
 import sharp from "sharp"
-import { fileURLToPath } from 'url';
+import { isUserAuthorized } from "./middleware/auth.js"
+import { __dirname, userAvatarDirPath, userAvatarFormat } from "./config.js"
 
 // Connect to the database
 const db = await databaseSetup();
 
-// Get __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-
 const app = express();
 const port = process.env.PORT || 4000;
 const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
-const avatarLink = 'https://api.dicebear.com/6.x/pixel-art/svg?seed=';
-const userAvatarDirPath = path.join(__dirname, 'storage', 'userAvatars');
-const userAvatarFormat = 'png';
 let user = [];
 let posts = [];
 let likes = [];
@@ -73,93 +66,77 @@ app.get('/sign-up', async (req, res) => {
     res.render("sign-up-page.ejs");
 })
 
+app.get('/profile-setting', isUserAuthorized, async (req, res) => {
+    res.render("profile-setting.ejs");
+})
+
+app.get('/settings', isUserAuthorized, async (req, res) => {
+    res.render("settings-page.ejs");
+})
 
 // Initial_Page
-app.get('/', async (req, res) => {  
-    console.log("A user visited " + req.url + "at " + new Date().toISOString + " from " + req.ip + " using " + req.headers['user-agent'] + " hostname: " + req.hostname);
-    const token = req.cookies.jwt;
-    let relatedUsersId = [];
-    let relatedUsers = [];
-    
-    if(token){
-        jwt.verify(token, jwtSecret, async (err, decodedToken)=> {
-            (err)
-            ?
-            res.status(401).json({message: "user not authorized!"})
-            :
-            user = await runQuery("SELECT * FROM users WHERE user_id = $1", [decodedToken.userid]);
-            user[0].password = null;
-            user[0].accountName = null;
-            posts = await runQuery("SELECT * FROM posts ORDER BY post_id DESC");
-            likes = await runQuery("SELECT * FROM likes");
-            comments = await runQuery("SELECT * FROM comments ORDER BY comment_id DESC");
+app.get('/', isUserAuthorized, async (req, res) => {  
 
-            // Add main user data
-            const filePath = path.join(userAvatarDirPath, `user_avatar_${user[0].user_id}.${userAvatarFormat}`);
-            if(fs.existsSync(filePath)) {
+    if(res.locals.user) {
+        let relatedUsersId = [];
+        let relatedUsers = [];
+        posts = await runQuery("SELECT * FROM posts ORDER BY post_id DESC");
+        likes = await runQuery("SELECT * FROM likes");
+        comments = await runQuery("SELECT * FROM comments ORDER BY comment_id DESC");
+
+        if(posts) {
+            // Add users id related to posts
+            posts.forEach( async (post) => {
+                // Add total likes
+                const totalLikes = likes.filter(like => like.post_id === post.post_id);
+                post.totalLikes = totalLikes.length;
+
+                // Add total comments
+                const totalComments = comments.filter(comment => comment.post_id === post.post_id);
+                post.totalComments = totalComments.length;
+
+                const isUserAdded = relatedUsers.find(user => user.user_id === post.user_id);
+                if(isUserAdded) return;
+                relatedUsersId.push(post.user_id);
+            })
+        }
+
+        if(comments) {
+            // Add users related to comments
+            comments.forEach(async (comment) => {
+                const isUserAdded = relatedUsers.find(user => user.user_id === comment.user_id);
+                if(isUserAdded) return;
+                relatedUsersId.push(comment.user_id);
+            })
+        }
+
+        // Get all users data from relatedUsersId
+        if(relatedUsersId.length > 0){
+            let queryCondition = relatedUsersId.map((_, index) => `$${index + 1}`).join(", ");
+            const queryString = `SELECT * FROM users WHERE user_id IN (${queryCondition})`;
+            const foundUsers = await runQuery(queryString, relatedUsersId);
+            if(!foundUsers) return;
+            foundUsers.forEach((user) => {
+                user.password = null;
+                user.accountName = null;
+
+                const filePath = path.join(userAvatarDirPath, `user_avatar_${user.user_id}.${userAvatarFormat}`);
+                if(!fs.existsSync(filePath)) return;
+
                 const avatarBuffer = fs.readFileSync(filePath);
                 const base64avatar = Buffer.from(avatarBuffer).toString('base64');
-                const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
-                user[0].avatar = avatar
-            }
+                user.avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
 
-            if(posts) {
-                // Add users id related to posts
-                posts.forEach( async (post) => {
-                    // Add total likes
-                    const totalLikes = likes.filter(like => like.post_id === post.post_id);
-                    post.totalLikes = totalLikes.length;
-    
-                    // Add total comments
-                    const totalComments = comments.filter(comment => comment.post_id === post.post_id);
-                    post.totalComments = totalComments.length;
-
-                    const isUserAdded = relatedUsers.find(user => user.user_id === post.user_id);
-                    if(isUserAdded) return;
-                    relatedUsersId.push(post.user_id);
-                })
-            }
-
-            if(comments) {
-                // Add users related to comments
-                comments.forEach(async (comment) => {
-                    const isUserAdded = relatedUsers.find(user => user.user_id === comment.user_id);
-                    if(isUserAdded) return;
-                    relatedUsersId.push(comment.user_id);
-                })
-            }
-
-            // Get all users data from relatedUsersId
-            if(relatedUsersId.length > 0){
-                let queryCondition = relatedUsersId.map((_, index) => `$${index + 1}`).join(", ");
-                const queryString = `SELECT * FROM users WHERE user_id IN (${queryCondition})`;
-                const foundUsers = await runQuery(queryString, relatedUsersId);
-                if(!foundUsers) return;
-                foundUsers.forEach((user) => {
-                    user.password = null;
-                    user.accountName = null;
-
-                    const filePath = path.join(userAvatarDirPath, `user_avatar_${user.user_id}.${userAvatarFormat}`);
-                    if(!fs.existsSync(filePath)) return;
-
-                    const avatarBuffer = fs.readFileSync(filePath);
-                    const base64avatar = Buffer.from(avatarBuffer).toString('base64');
-                    user.avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
-
-                    relatedUsers.push(user);
-                })
-            }
-            
-            res.render("blog.ejs", {
-                user: user[0],
-                posts: posts,
-                likes: likes,
-                comments: comments,
-                relatedUsers: relatedUsers
-            });
-        })
-    } else {
-        res.redirect('/login');
+                relatedUsers.push(user);
+            })
+        }
+        
+        res.render("blog.ejs", {
+            posts: posts,
+            likes: likes,
+            comments: comments,
+            relatedUsers: relatedUsers
+        });
     }
 });
 
@@ -183,12 +160,14 @@ app.post("/signing-up", async (req, res) => {
         .toFile(userAvatarDirPath + `/user_avatar_${nextUserId}.${userAvatarFormat}`);
 
         // Insert the new user
-        const insertedRow = await runQuery("INSERT INTO users VALUES ($1,$2,$3,$4,$5) RETURNING *", [
+        const insertedRow = await runQuery("INSERT INTO users VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *", [
             nextUserId,
             req.body.accountName, 
             req.body.Gender,
             req.body.Username, 
             hashedPassword,
+            req.body.firstName,
+            req.body.lastName
         ])
 
         // Generate a JWT

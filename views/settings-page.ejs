@@ -1,0 +1,188 @@
+<%- include('./partials/header', { title: 'Settings' }) %>
+<%- include('./partials/navBar') %>
+
+
+
+<style>
+    body {
+        font-family: 'Calibri', sans-serif;
+    }
+
+    /* gender */
+    .gender-radio-male,
+    .gender-radio-female {
+        opacity: 0.5;
+    }
+    .gender-radio-container[data-gender="male"] .gender-radio-male{
+        opacity: 1;
+    }
+    .gender-radio-container[data-gender="female"] .gender-radio-female{
+        opacity: 1;
+    }
+</style>
+
+<!-- content -->
+<div 
+class="
+    flex-col
+    md:mt-[70px] md:max-w-[1000px] md:w-full md:mx-auto md:flex md:items-center md:justify-center md:flex-row
+">
+    <div 
+    class="
+        mt-[50px]
+        border-e-0 w-full p-8 m-0
+        md:flex md:flex-col md:gap-2 md:p-2 md:pe-[90px] md:border-e-2 md:self-start md:w-fit
+    ">
+        <h4 class="font-extrabold text-4xl p-3">Settings</h4>
+        <ul class="flex flex-col gap-2">
+            <li>
+                <button type="button" 
+                class="
+                    text-left rounded-lg hover:bg-slate-100 font-medium bg-slate-100 p-3
+                    md:w-[200px] 
+                    w-full
+                ">
+                    Public profile
+                </button>
+            </li>
+            <li>
+                <button type="button" 
+                class="
+                    text-left rounded-lg hover:bg-slate-100 font-medium p-3
+                    md:w-[200px] 
+                    w-full
+                ">
+                    Account Settings
+                </button>
+            </li>
+            <li>
+                <button type="button" 
+                class="
+                    text-left rounded-lg hover:bg-slate-100 font-medium p-3
+                    md:w-[200px] 
+                    w-full
+                ">
+                    Notifucations
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div 
+    class="
+        flex flex-col p-10 w-full 
+        md:pt-[80px]
+    ">
+        <h1 class="font-extrabold text-4xl">Public Profile</h1>
+        <div class="flex gap-7 mt-8 justify-center">
+            <img id="avatar_preview" src="<%= user.avatar %>" alt="" class="rounded-full h-[100px] w-[100px]">
+            <div class="flex flex-col gap-3">
+                <label for="upload_img_input" type="button" class="flex gap-2 items-center rounded-lg px-3 py-2 border-2 border-green-300 bg-green-100 text-sm text-green-600 hover:bg-green-200 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-upload">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                        <path d="M7 9l5 -5l5 5" />
+                        <path d="M12 4l0 12" />
+                    </svg>
+                    Upload image
+                    <input id="upload_img_input" accept="image/jpeg, image/png" type="file" name="avatar" class="hidden">
+                </label>
+                <button type="button" class="flex gap-2 items-center rounded-lg px-3 py-2 border-2 border-indigo-300 bg-indigo-100 text-sm text-indigo-600 hover:bg-indigo-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrows-shuffle">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M18 4l3 3l-3 3" />
+                        <path d="M18 20l3 -3l-3 -3" />
+                        <path d="M3 7h3a5 5 0 0 1 5 5a5 5 0 0 0 5 5h5" />
+                        <path d="M21 7h-5a4.978 4.978 0 0 0 -3 1m-4 8a4.984 4.984 0 0 1 -3 1h-3" />
+                    </svg>
+                    Random Avatar
+                </button>
+            </div>
+        </div>
+        <div class="flex flex-col mt-8 gap-5">
+            <div class="flex w-full justify-between">
+                <div class="w-[45%]">
+                    <label for="firstName" class="block font-bold">Fist name</label>
+                    <input type="text" name="firstName" value="<%= user.first_name %>" placeholder="First Name" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                </div>
+                <div class="w-[45%]">
+                    <label for="lastName" class="block font-bold">Last name</label>
+                    <input type="text" name="lastName" value="<%= user.last_name %>" placeholder="Last Name" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                </div>
+            </div>
+            <div>
+                <label class="block font-bold">Gender</label>
+                <div id="gender_radio_container" data-gender="<%= user.gender.toLowerCase() %>" class="gender-radio-container flex w-full justify-between mt-2">
+                    <div class="w-[45%]">
+                        <label for="gender_radio_male" class="gender-radio-male px-3 py-2 border-2 border-sky-300 rounded-lg bg-sky-100 text-sky-600 hover:bg-sky-200 cursor-pointer inline-flex w-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="	#2986cc" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-mars me-3">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M10 14m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0"></path>
+                                <path d="M19 5l-5.4 5.4"></path>
+                                <path d="M19 5l-5 0"></path>
+                                <path d="M19 5l0 5"></path>
+                            </svg>
+                            Male
+                            <input id="gender_radio_male" type="radio" name="gender" value="Male" class="gender-radio hidden">
+                        </label>
+                    </div>
+                    <div class="w-[45%]">
+                        <label for="gender_radio_female" class="gender-radio-female px-3 py-2 border-2 border-pink-300 rounded-lg bg-pink-100 text-pink-600 inline-flex w-full cursor-pointer hover:opacity-100 hover:bg-pink-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#c90076" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-venus me-3">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                                <path d="M12 9m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0"></path>
+                                <path d="M12 14l0 7"></path>
+                                <path d="M9 18l6 0"></path>
+                            </svg>
+                            Female
+                            <input id="gender_radio_female" type="radio" name="gender" value="Female" class="gender-radio hidden">
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label for="username" class="block font-bold">Username</label>
+                <input type="text" name="username" value="<%= user.username %>" placeholder="username" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+            </div>
+            <div>
+                <label for="accountName" class="block font-bold">Account name</label>
+                <input disabled type="text" name="accountName" value="*******<%= user.account_name %>" placeholder="Account name" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+            </div>
+            <div>
+                <label for="password" class="block font-bold">Password</label>
+                <input disabled type="password" name="password" value="12345456" placeholder="Password" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+            </div>
+            <div class="w-full flex justify-end">
+                <button disabled class="bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy inline">
+                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                        <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
+                        <path d="M12 14m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                        <path d="M14 4l0 4l-6 0l0 -4" />
+                    </svg>
+                    Save Changes
+                </button>
+            </div>
+        </div>  
+    </div>
+</div>
+
+<script>
+
+    // gender radio
+    const genderRadio = document.querySelectorAll('.gender-radio');
+    genderRadio && genderRadio.forEach((radio) => {
+        radio.addEventListener('change', () => {
+            const gender = radio.value;
+            document.querySelector('.gender-radio-container').setAttribute('data-gender', (gender).toLowerCase());
+        })
+    })
+
+    // image upload input
+    const uploadImgInput = document.querySelector('#upload_img_input');
+    const avatarPreview = document.querySelector('#avatar_preview');
+    uploadImgInput && uploadImgInput.addEventListener('input', () => {
+        avatarPreview.src = URL.createObjectURL(uploadImgInput.files[0]);
+    })
+</script>
+
+<%- include('./partials/footer') %>

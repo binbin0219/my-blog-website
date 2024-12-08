@@ -47,7 +47,7 @@ const createTableQueries = [
     "gender" VARCHAR(20),
     "username" VARCHAR(50),
     "password" VARCHAR(200)
-  );`
+  );`,
 ];
 
 export default async function databaseSetup() {

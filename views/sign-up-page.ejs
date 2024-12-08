@@ -1,25 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
+<%- include('./partials/header', { title: 'Sign up' }) %>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./styles/signup.css">
-    <title>Document</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
-</head>
-
-<body class="poppins-regular">
+<link rel="stylesheet" href="./styles/signup.css">
+<link
+    href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet">
+<link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<style>
+    body {
+        font-family: "Poppins", sans-serif;
+    }
+</style>
 
     <div class="sign-up">
         <h1>Sign up</h1>
         <form class="sign-up-form" action="/signing-up" method="post">
+            <div class="w-full flex justify-between">
+                <div class="flex flex-col w-[45%]">
+                    <label for="firstName">First Name</label>
+                    <div class="InputFields">
+                        <span class="material-symbols-outlined icon">first_page</span>
+                        <input name="firstName" required>
+                        <div class="InputFieldBottomLine"></div>
+                    </div>
+                </div>
+                <div class="flex flex-col w-[45%]">
+                    <label for="lastName">Last Name</label>
+                    <div class="InputFields">
+                        <span class="material-symbols-outlined icon">last_page</span>
+                        <input name="lastName" required>
+                        <div class="InputFieldBottomLine"></div>
+                    </div>
+                </div>
+            </div>
             <label>Username</label>
             <div class="InputFields">
                 <span class="material-symbols-outlined icon"> person</span>
@@ -222,6 +235,5 @@
         }
     </script>
 
-</body>
 
-</html>
+<%- include('partials/footer') %>
