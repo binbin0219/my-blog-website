@@ -6,6 +6,7 @@ import cookieParser from "cookie-parser"
 import databaseSetup, { runQuery } from "./databaseSetup.js"
 import fs from "fs"
 import path from "path"
+import sharp from "sharp"
 import { fileURLToPath } from 'url';
 
 // Connect to the database
@@ -21,11 +22,43 @@ const port = process.env.PORT || 4000;
 const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
 const avatarLink = 'https://api.dicebear.com/6.x/pixel-art/svg?seed=';
 const userAvatarDirPath = path.join(__dirname, 'storage', 'userAvatars');
-var user = [];
-var posts = [];
-var likes = [];
-var comments = [];
+const userAvatarFormat = 'png';
+let user = [];
+let posts = [];
+let likes = [];
+let comments = [];
 
+// Avataaars.io
+const maleOptions = {
+    topType: ["ShortHairDreads01", "ShortHairDreads02", "ShortHairFrizzle", "ShortHairShaggyMullet", "ShortHairShortCurly"],
+    facialHairType: ["BeardMedium", "BeardLight", "Blank"],
+    clotheType: ["BlazerShirt", "BlazerSweater", "CollarSweater", "GraphicShirt", "Hoodie", "Overall"],
+    eyeType: ["Wink", "Happy", "Default"],
+    eyebrowType: ["DefaultNatural", "Default", "RaisedExcited", "RaisedExcitedNatural"],
+    mouthType: ["Smile", "Twinkle", "Default"],
+    skinColor: ["Light", "Brown", "DarkBrown"],
+};
+const femaleOptions = {
+    topType: ["LongHairBob", "LongHairBun", "LongHairCurly", "LongHairCurvy", "LongHairDreads", "LongHairFrida"],
+    facialHairType: ["Blank"],
+    clotheType: ["BlazerShirt", "BlazerSweater", "CollarSweater", "GraphicShirt", "Hoodie", "Overall"],
+    eyeType: ["Happy", "Wink", "Default"],
+    eyebrowType: ["DefaultNatural", "Default", "RaisedExcited", "RaisedExcitedNatural"],
+    mouthType: ["Smile", "Twinkle", "Default"],
+    skinColor: ["Light", "Brown", "DarkBrown"],
+};
+async function generateRandomAvatar(gender) {
+    const options = gender === "male" ? maleOptions : femaleOptions;
+    const topType = options.topType[Math.floor(Math.random() * options.topType.length)];
+    const facialHairType = options.facialHairType[Math.floor(Math.random() * options.facialHairType.length)];
+    const clotheType = options.clotheType[Math.floor(Math.random() * options.clotheType.length)];
+    const eyebrowType = options.eyebrowType[Math.floor(Math.random() * options.eyebrowType.length)];
+    const mouthType = options.mouthType[Math.floor(Math.random() * options.mouthType.length)];
+    const skinColor = options.skinColor[Math.floor(Math.random() * options.skinColor.length)];
+    const avatar = await fetch(`https://avataaars.io/?avatarStyle=Circle&topType=${topType}&facialHairType=${facialHairType}&clotheType=${clotheType}&eyebrowType=${eyebrowType}&mouthType=${mouthType}&skinColor=${skinColor}`);
+    const avatarSVG = await avatar.text();
+    return avatarSVG;
+}
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -62,11 +95,11 @@ app.get('/', async (req, res) => {
             comments = await runQuery("SELECT * FROM comments ORDER BY comment_id DESC");
 
             // Add main user data
-            const filePath = path.join(userAvatarDirPath, `user_avatar_${user[0].user_id}.jpg`);
+            const filePath = path.join(userAvatarDirPath, `user_avatar_${user[0].user_id}.${userAvatarFormat}`);
             if(fs.existsSync(filePath)) {
                 const avatarBuffer = fs.readFileSync(filePath);
                 const base64avatar = Buffer.from(avatarBuffer).toString('base64');
-                const avatar = `data:image/jpeg;base64,${base64avatar}`
+                const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
                 user[0].avatar = avatar
             }
 
@@ -106,12 +139,12 @@ app.get('/', async (req, res) => {
                     user.password = null;
                     user.accountName = null;
 
-                    const filePath = path.join(userAvatarDirPath, `user_avatar_${user.user_id}.jpg`);
+                    const filePath = path.join(userAvatarDirPath, `user_avatar_${user.user_id}.${userAvatarFormat}`);
                     if(!fs.existsSync(filePath)) return;
 
                     const avatarBuffer = fs.readFileSync(filePath);
                     const base64avatar = Buffer.from(avatarBuffer).toString('base64');
-                    user.avatar = `data:image/jpeg;base64,${base64avatar}`
+                    user.avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
 
                     relatedUsers.push(user);
                 })
@@ -137,21 +170,17 @@ app.post("/signing-up", async (req, res) => {
     const nextUserId = users[0] ? users[users.length - 1].user_id + 1 : 1;
 
     try {
-        // Generate a random avatar base on username
-        const avatarJSON = await fetch(`${avatarLink}${req.body.Username}`);
-        const avatarBlob = await avatarJSON.blob();
-        const avatarBuffer = Buffer.from(await avatarBlob.arrayBuffer());
-
-        // Define the output directory and file name
-        const outputFile = path.join(userAvatarDirPath, `user_avatar_${nextUserId}.jpg`);
-
         // Ensure the directory exists
         if (!fs.existsSync(userAvatarDirPath)) {
             fs.mkdirSync(userAvatarDirPath, { recursive: true });
         }
-
-        // Write the SVG data to the file
-        fs.writeFileSync(outputFile, avatarBuffer);
+        
+        // Generate a random avatar and save it
+        const avatar = await generateRandomAvatar((req.body.Gender).toLowerCase());
+        sharp(Buffer.from(avatar))
+        // .png({ quality: 90, compressionLevel: 9, force: true })  // force PNG format and set transparency
+        .toFormat(`${userAvatarFormat}`)
+        .toFile(userAvatarDirPath + `/user_avatar_${nextUserId}.${userAvatarFormat}`);
 
         // Insert the new user
         const insertedRow = await runQuery("INSERT INTO users VALUES ($1,$2,$3,$4,$5) RETURNING *", [
