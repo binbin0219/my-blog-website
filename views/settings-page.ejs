@@ -1,7 +1,9 @@
 <%- include('./partials/header', { title: 'Settings' }) %>
 <%- include('./partials/navBar') %>
 
-
+<!-- Croppie.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.css">
 
 <style>
     body {
@@ -86,7 +88,7 @@ class="
                     Upload image
                     <input id="upload_img_input" accept="image/jpeg, image/png" type="file" name="avatar" class="hidden">
                 </label>
-                <button type="button" class="flex gap-2 items-center rounded-lg px-3 py-2 border-2 border-indigo-300 bg-indigo-100 text-sm text-indigo-600 hover:bg-indigo-200">
+                <button id="random_avatar_btn" type="button" class="flex gap-2 items-center rounded-lg px-3 py-2 border-2 border-indigo-300 bg-indigo-100 text-sm text-indigo-600 hover:bg-indigo-200">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-arrows-shuffle">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path d="M18 4l3 3l-3 3" />
@@ -167,7 +169,6 @@ class="
 </div>
 
 <script>
-
     // gender radio
     const genderRadio = document.querySelectorAll('.gender-radio');
     genderRadio && genderRadio.forEach((radio) => {
@@ -179,9 +180,73 @@ class="
 
     // image upload input
     const uploadImgInput = document.querySelector('#upload_img_input');
-    const avatarPreview = document.querySelector('#avatar_preview');
     uploadImgInput && uploadImgInput.addEventListener('input', () => {
-        avatarPreview.src = URL.createObjectURL(uploadImgInput.files[0]);
+        // avatarPreview.src = URL.createObjectURL(uploadImgInput.files[0]);
+        confDialog(
+            'Crop your avatar', 
+            `<div class="w-full flex justify-center">
+                <div id="avatar_croppie"></div>
+            </div>`, 
+            'Confirm', 
+            async () => {
+                const avatarPreview = document.querySelector('#avatar_preview');
+                const resultAvatar = await avatarCroppie.result('base64', 'viewport', 'png', true);
+                avatarPreview.src = resultAvatar;
+
+                // Clear croppie.js
+                avatarCroppie.destroy();
+
+                // Close confirmation dialog
+                confDialog();
+            }
+        );
+
+        // Croppie.js initialization
+        const avatarCroppieContainer = document.querySelector('#avatar_croppie');
+        const avatarCroppie = new Croppie(avatarCroppieContainer, {
+            enableOrientation: true,
+            viewport: {
+                width: 200,
+                height: 200,
+                type: 'circle'
+            },
+            boundary: {
+                width: 300,
+                height: 300
+            }
+        });
+
+        avatarCroppie.bind({
+            url: URL.createObjectURL(uploadImgInput.files[0])
+        });
+    })
+
+    // Random avatar button
+    const randomAvatarBtn = document.querySelector('#random_avatar_btn');
+    randomAvatarBtn && randomAvatarBtn.addEventListener('click', async () => {
+        if(randomAvatarBtn.classList.contains('button-disabled')) return;
+
+        // Disable button
+        randomAvatarBtn.classList.add('button-disabled');
+
+        const gender = document.querySelector('.gender-radio-container').getAttribute('data-gender');
+        fetch(`/api/random-avatar/${gender}`)
+        .then(res => res.json())
+        .then(data => {
+            setTimeout(() => {
+                const avatarPreview = document.querySelector('#avatar_preview');
+                avatarPreview.src = data.avatar;
+
+                // Re-enable button
+                randomAvatarBtn.classList.remove('button-disabled');
+            }, 500);
+        })
+        .catch(err => {
+            console.log(err);
+
+            // Re-enable button
+            randomAvatarBtn.classList.remove('button-disabled');
+        })
     })
 </script>
 

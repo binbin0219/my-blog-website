@@ -321,6 +321,30 @@ app.post('/create-comment', async (req,res)=> {
     })
 })
 
+app.get('/api/random-avatar/:gender', async (req, res) => {
+    // Extract gender from route params
+    const gender = req.params.gender.toLowerCase();
+
+    // Validate gender
+    if (!['male', 'female'].includes(gender)) {
+        return res.status(400).json({ error: 'Invalid gender. Use "male" or "female".' });
+    }
+
+    const avatar = await generateRandomAvatar(gender);
+
+    const avatarBuffer = await sharp(Buffer.from(avatar))
+    // .png({ quality: 90, compressionLevel: 9, force: true })  // force PNG format and set transparency
+    .toFormat(`${userAvatarFormat}`)
+    .toBuffer();
+
+    const avatarBase64 = avatarBuffer.toString('base64');
+
+    res.send({
+        format: userAvatarFormat,
+        avatar: `data:image/${userAvatarFormat};base64,${avatarBase64}`
+    });
+});
+
 app.listen(port, () => {
     console.log("listening on port" + port);
 });

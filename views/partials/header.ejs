@@ -22,4 +22,49 @@
         <link href="https://fonts.googleapis.com/css2?family=Fugaz+One&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
     
     </head>
+
+    <script>
+        // Confirmation Dialog
+        function confDialog(header, body, actionText, action) {
+            const confDialog = document.querySelector('#conf_dialog');
+            const confDialogHeader = confDialog.querySelector('.conf-dialog-header');
+            const confDialogBody = confDialog.querySelector('.conf-dialog-body');
+            const confDialogAction = confDialog.querySelector('.conf-dialog-action');
+
+            // Clear confirmation dialog
+            confDialogHeader.innerHTML = '';
+            confDialogBody.innerHTML = '';
+            confDialogAction.innerHTML = '';
+
+            // Close confirmation dialog
+            if(!confDialog.classList.contains('hidden')) {
+                confDialog.classList.add('hidden');
+                return;
+            }
+
+            if(!header || !body || !actionText || !action) {
+                confDialog.classList.add('hidden');
+                return;
+            }
+
+            // Open confirmation dialog
+            confDialogHeader.innerHTML = header;
+            confDialogBody.innerHTML = body;
+            confDialogAction.innerHTML = actionText;
+            confDialogAction.onclick = action;
+            confDialog.classList.remove('hidden');
+        }
+    </script>
 <body>
+
+<!-- Confirmation Dialog -->
+<div id="conf_dialog" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-start pt-10 hidden" style="z-index: 9999;">
+    <div class="bg-white min-w-[400px] w-fit min-h-[200px] h-fit rounded-lg flex flex-col justify-center items-start gap-2 p-5">
+        <h4 class="conf-dialog-header text-2xl font-bold"></h4>
+        <div class="conf-dialog-body text-lg w-full"></div>
+        <div class="flex gap-5 w-full justify-end mt-7">
+            <button onclick="confDialog();" class="bg-white border-black border-2 text-black px-3 py-2 rounded-lg font-bold hover:bg-black hover:text-white">Cancel</button>
+            <button class="conf-dialog-action bg-red-600 text-white px-3 py-2 rounded-lg font-bold hover:bg-red-800">Confirm</button>
+        </div>
+    </div>
+</div>
