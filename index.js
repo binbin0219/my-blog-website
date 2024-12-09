@@ -7,7 +7,7 @@ import databaseSetup, { runQuery } from "./databaseSetup.js"
 import fs from "fs"
 import path from "path"
 import sharp from "sharp"
-import { isUserAuthorized } from "./middleware/auth.js"
+import { authenticateToken, isUserAuthorized } from "./middleware/auth.js"
 import { __dirname, userAvatarDirPath, userAvatarFormat } from "./config.js"
 
 // Connect to the database
@@ -71,11 +71,13 @@ app.get('/profile-setting', isUserAuthorized, async (req, res) => {
 })
 
 app.get('/settings', isUserAuthorized, async (req, res) => {
+    res.locals.routeName = "settings";
     res.render("settings-page.ejs");
 })
 
 // Initial_Page
 app.get('/', isUserAuthorized, async (req, res) => {  
+    res.locals.routeName = "home";
 
     if(res.locals.user) {
         let relatedUsersId = [];
@@ -344,6 +346,36 @@ app.get('/api/random-avatar/:gender', async (req, res) => {
         avatar: `data:image/${userAvatarFormat};base64,${avatarBase64}`
     });
 });
+
+app.post('/api/user-profile/update', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userid;
+        const avatarBase64 = req.body.avatar_base64.split(',')[1];
+        const queryString = `UPDATE users SET gender = $1, username = $2, first_name = $3, last_name = $4 WHERE user_id = ${userId}`;
+        const queryValues = [
+            req.body.gender,
+            req.body.username,
+            req.body.first_name,
+            req.body.last_name,
+        ];
+    
+        // Save avatar to file
+        const avatarBuffer = Buffer.from(avatarBase64, 'base64');
+        const avatarPath = path.join(userAvatarDirPath, `user_avatar_${userId}.${userAvatarFormat}`);
+        await sharp(avatarBuffer)
+            .toFormat(`${userAvatarFormat}`)
+            .toFile(avatarPath);
+    
+        // Update user
+        await runQuery(queryString, queryValues);
+        res.json({ message: 'Profile updated successfully' });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to update profile' });
+    }
+    
+})
 
 app.listen(port, () => {
     console.log("listening on port" + port);

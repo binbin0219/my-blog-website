@@ -33,4 +33,14 @@ function isUserAuthorized(req, res, next) {
     }
 }
 
-export {isUserAuthorized}
+function authenticateToken(req, res, next) {
+    const token = req.cookies.jwt;
+    if(!token) return res.status(401).send('Unauthorized');
+    jwt.verify(token, jwtSecret, async (err, decodedToken) => {
+        if(err) return res.status(401).send('Unauthorized');
+        req.user = decodedToken;
+        next();
+    });
+}
+
+export {isUserAuthorized, authenticateToken}

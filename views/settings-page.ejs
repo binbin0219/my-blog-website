@@ -76,7 +76,7 @@ class="
     ">
         <h1 class="font-extrabold text-4xl">Public Profile</h1>
         <div class="flex gap-7 mt-8 justify-center">
-            <img id="avatar_preview" src="<%= user.avatar %>" alt="" class="rounded-full h-[100px] w-[100px]">
+            <img id="avatar_preview" src="<%= user.avatar %>" alt="" class="rounded-full h-[100px] w-[100px] border-2">
             <div class="flex flex-col gap-3">
                 <label for="upload_img_input" type="button" class="flex gap-2 items-center rounded-lg px-3 py-2 border-2 border-green-300 bg-green-100 text-sm text-green-600 hover:bg-green-200 cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-upload">
@@ -103,12 +103,12 @@ class="
         <div class="flex flex-col mt-8 gap-5">
             <div class="flex w-full justify-between">
                 <div class="w-[45%]">
-                    <label for="firstName" class="block font-bold">Fist name</label>
-                    <input type="text" name="firstName" value="<%= user.first_name %>" placeholder="First Name" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                    <label for="first_name_input" class="block font-bold">Fist name</label>
+                    <input id="first_name_input" type="text" name="firstName" value="<%= user.first_name %>" placeholder="First Name" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
                 </div>
                 <div class="w-[45%]">
-                    <label for="lastName" class="block font-bold">Last name</label>
-                    <input type="text" name="lastName" value="<%= user.last_name %>" placeholder="Last Name" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                    <label for="last_name_input" class="block font-bold">Last name</label>
+                    <input id="last_name_input" type="text" name="lastName" value="<%= user.last_name %>" placeholder="Last Name" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
                 </div>
             </div>
             <div>
@@ -142,8 +142,8 @@ class="
                 </div>
             </div>
             <div>
-                <label for="username" class="block font-bold">Username</label>
-                <input type="text" name="username" value="<%= user.username %>" placeholder="username" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                <label for="username_input" class="block font-bold">Username</label>
+                <input id="username_input" type="text" name="username" value="<%= user.username %>" placeholder="username" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
             </div>
             <div>
                 <label for="accountName" class="block font-bold">Account name</label>
@@ -154,7 +154,7 @@ class="
                 <input disabled type="password" name="password" value="12345456" placeholder="Password" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
             </div>
             <div class="w-full flex justify-end">
-                <button disabled class="bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold">
+                <button id="save_changes_btn" class="bg-indigo-600 text-white px-3 py-2 rounded-lg font-bold">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-device-floppy inline">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path d="M6 4h10l4 4v10a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2" />
@@ -246,6 +246,49 @@ class="
 
             // Re-enable button
             randomAvatarBtn.classList.remove('button-disabled');
+        })
+    })
+
+    // Save changes button
+    const saveChangesBtn = document.querySelector('#save_changes_btn');
+    saveChangesBtn && saveChangesBtn.addEventListener('click', () => {
+        if(saveChangesBtn.classList.contains('button-disabled')) return;
+
+        // Disable button
+        saveChangesBtn.classList.add('button-disabled');
+
+        const avatarBase64 = document.querySelector('#avatar_preview').src;
+        const gender = document.querySelector('.gender-radio-container').getAttribute('data-gender');
+        const username = document.querySelector('#username_input').value;
+        const firstName = document.querySelector('#first_name_input').value;
+        const lastName = document.querySelector('#last_name_input').value;
+
+        fetch('/api/user-profile/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: <%= user.user_id %>,
+                avatar_base64: avatarBase64,
+                gender: gender[0].toUpperCase() + gender.slice(1),
+                username: username,
+                first_name: firstName,
+                last_name: lastName,
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            setTimeout(() => {
+                // Re-enable button
+                saveChangesBtn.classList.remove('button-disabled');
+            }, 500);
+        })
+        .catch(err => {
+            console.log(err);
+
+            // Re-enable button
+            saveChangesBtn.classList.remove('button-disabled');
         })
     })
 </script>
