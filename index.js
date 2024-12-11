@@ -14,6 +14,7 @@ import { __dirname, userAvatarDirPath, userAvatarFormat } from "./config.js"
 const db = await databaseSetup();
 
 const app = express();
+app.use(express.json({ limit: '10mb' })); // Increase JSON payload size
 const port = process.env.PORT || 4000;
 const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
 let user = [];
@@ -75,6 +76,69 @@ app.get('/settings', isUserAuthorized, async (req, res) => {
     res.render("settings-page.ejs");
 })
 
+app.get('/user/profile/:user_id', isUserAuthorized, async (req, res) => {
+    res.locals.routeName = "user.profile";
+    const relatedUsersId = [];
+    const relatedUsers = [];
+    const foundUser = await runQuery("SELECT * FROM users WHERE user_id = $1", [req.params.user_id]);
+    foundUser[0].password = undefined;
+    foundUser[0].accountName = undefined;
+
+    // Get user avatar
+    const filePath = path.join(userAvatarDirPath, `user_avatar_${foundUser[0].user_id}.${userAvatarFormat}`);
+    if(!fs.existsSync(filePath)) return;
+    const avatarBuffer = fs.readFileSync(filePath);
+    const base64avatar = Buffer.from(avatarBuffer).toString('base64');
+    const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
+    foundUser[0].avatar = avatar;
+
+    // Get all posts from user
+    const userPosts = await runQuery("SELECT * FROM posts WHERE user_id = $1 ORDER BY post_id DESC", [req.params.user_id]);
+
+    // Add users id related to userPosts
+    if(userPosts) {
+        for(const post of userPosts) {
+            // Add liked users
+            const likedUsers = await runQuery("SELECT * FROM likes WHERE post_id = $1", [post.post_id]);
+            post.likedUsers = likedUsers;
+    
+            // Add total comments
+            const totalComments = await runQuery("SELECT COUNT(*) FROM comments WHERE post_id = $1", [post.post_id]);
+            post.totalComments = totalComments.length;
+    
+            const isUserAdded = relatedUsers.find(user => user.user_id === post.user_id);
+            if(isUserAdded !== undefined) return;
+            relatedUsersId.push(post.user_id);
+        }
+    }
+
+    // Get all users data from relatedUsersId
+    if(relatedUsersId.length > 0){
+        let queryCondition = relatedUsersId.map((_, index) => `$${index + 1}`).join(", ");
+        const queryString = `SELECT * FROM users WHERE user_id IN (${queryCondition})`;
+        const foundUsers = await runQuery(queryString, relatedUsersId);
+        if(!foundUsers) return;
+        foundUsers.forEach((user) => {
+            user.password = null;
+            user.accountName = null;
+
+            const filePath = path.join(userAvatarDirPath, `user_avatar_${user.user_id}.${userAvatarFormat}`);
+            if(!fs.existsSync(filePath)) return;
+
+            const avatarBuffer = fs.readFileSync(filePath);
+            const base64avatar = Buffer.from(avatarBuffer).toString('base64');
+            user.avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
+
+            relatedUsers.push(user);
+        })
+    }
+
+    res.locals.profile_user = foundUser[0];
+    res.locals.posts = userPosts;
+    res.locals.related_users = relatedUsers;
+    res.render("user-profile.ejs");
+})
+
 // Initial_Page
 app.get('/', isUserAuthorized, async (req, res) => {  
     res.locals.routeName = "home";
@@ -86,21 +150,21 @@ app.get('/', isUserAuthorized, async (req, res) => {
         likes = await runQuery("SELECT * FROM likes");
         comments = await runQuery("SELECT * FROM comments ORDER BY comment_id DESC");
 
+        // Add users id related to userPosts
         if(posts) {
-            // Add users id related to posts
-            posts.forEach( async (post) => {
-                // Add total likes
-                const totalLikes = likes.filter(like => like.post_id === post.post_id);
-                post.totalLikes = totalLikes.length;
-
+            for(const post of posts) {
+                // Add liked users
+                const likedUsers = await runQuery("SELECT * FROM likes WHERE post_id = $1", [post.post_id]);
+                post.likedUsers = likedUsers;
+        
                 // Add total comments
-                const totalComments = comments.filter(comment => comment.post_id === post.post_id);
+                const totalComments = await runQuery("SELECT COUNT(*) FROM comments WHERE post_id = $1", [post.post_id]);
                 post.totalComments = totalComments.length;
-
+        
                 const isUserAdded = relatedUsers.find(user => user.user_id === post.user_id);
-                if(isUserAdded) return;
+                if(isUserAdded !== undefined) return;
                 relatedUsersId.push(post.user_id);
-            })
+            }
         }
 
         if(comments) {

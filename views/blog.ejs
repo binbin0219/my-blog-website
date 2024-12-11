@@ -1,13 +1,14 @@
 <%- include('./partials/header', { title: 'Home' }) %>
+<%- include('./components/post')  %>
 <%- include('./partials/navBar') %>
     <link rel="stylesheet" href="./styles/blog.css">
 
     <div class="middle">
         <form id="create_post_form" class="create-post h-[105px] overflow-y-hidden relative" action="/create-post" method="post" style="transition: all .5s ease-out;">
-            <div class="flex gap-4 items-center mb-6 w-full">
-                <img class="w-[45px] h-[45px] rounded-full" src="<%= user.avatar %>" alt="">
+            <div class="flex gap-4 items-center mb-6 w-full cursor-pointer">
+                <img onclick="window.location.href='/user/profile/<%= user.user_id %>'" class="w-[45px] h-[45px] rounded-full" src="<%= user.avatar %>" alt="">
                 <div class="flex flex-col">
-                    <h4 class="font-bold">Welcome! <%= user.username %></h4>
+                    <h4 onclick="window.location.href='/user/profile/<%= user.user_id %>'" class="font-bold hover:underline">Welcome! <%= user.username %></h4>
                     <h6 class="text-sm">Have something to share?</h6>
                 </div>
             </div>
@@ -89,137 +90,20 @@
             </div>
         </form>
 
-        <div class="post-container">
-            <h1 style="text-align: center;">Blog Posts</h1>
-            <% if (typeof posts !==undefined && posts.length > 0) { %>
-                <% for( let post of posts) { %>
-                    <div 
-                        data-comment-expanded="false"
-                        data-post-editing = "false"
-                        id="post_<%= post.post_id %>" 
-                        class="
-                        rounded-xl p-4 mb-4 bg-white
-                        post <%= likes.some(like => (like.post_id === post.post_id) && (like.user_id === user.user_id)) ? " liked": "" %> 
-                    ">
-                        <div class="flex gap-1">
-                            <img class="w-[45px] h-[45px] rounded-full" src="<%= relatedUsers.find(user => user.user_id === post.user_id).avatar %>" alt="">
-                            <div class="flex flex-col">
-                                <h4 class="font-bold"><%= relatedUsers.find(user => user.user_id === post.user_id).username %></h4>
-                                <h6 class="text-sm"><%= post.date %></h6>
-                            </div>
-                        </div>
-                        <p class="postId hidden">
-                            <%= post.post_id %>
-                        </p>
-                        <h1 class="title font-bold mt-3">
-                            <%= post.title %>
-                        </h1>
-                        <p class="content">
-                            <%= post.content %>
-                        </p>
-                        <div class="mt-3 border-t-2 border-gray-200">
-                            <div class="buttons flex gap-5 mt-2 rounded-full p-3 items-center w-fit border-2 bg-slate-100 border-slate-300" onclick="postActionsHandler(event)">
-                                <!-- Like button -->
-                                <button
-                                    data-post-action="like"
-                                    style="color: black;"
-                                    class="like like-button flex gap-2 editing-disabled">
-                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#F9452C" stroke="#F9452C" class="icon icon-tabler icons-tabler-filled icon-tabler-heart icon-liked">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M6.979 3.074a6 6 0 0 1 4.988 1.425l.037 .033l.034 -.03a6 6 0 0 1 4.733 -1.44l.246 .036a6 6 0 0 1 3.364 10.008l-.18 .185l-.048 .041l-7.45 7.379a1 1 0 0 1 -1.313 .082l-.094 -.082l-7.493 -7.422a6 6 0 0 1 3.176 -10.215z" />
-                                    </svg>
-                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F9452C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-heart icon-like">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
-                                    </svg>
-                                    <p class="total-likes"><%= post.totalLikes %></p>
-                                </button>
-
-                                <!-- Comment button -->
-                                <button 
-                                    data-post-action="open-comments"
-                                    class="comment flex gap-2 editing-disabled"
-                                    style="color: black;">
-                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#2293F9" stroke="#2293F9" class="icon icon-tabler icons-tabler-filled icon-tabler-message icon-comment-opened">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M18 3a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-4.724l-4.762 2.857a1 1 0 0 1 -1.508 -.743l-.006 -.114v-2h-1a4 4 0 0 1 -3.995 -3.8l-.005 -.2v-8a4 4 0 0 1 4 -4zm-4 9h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m2 -4h-8a1 1 0 1 0 0 2h8a1 1 0 0 0 0 -2" />
-                                    </svg>
-                                    <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2293F9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-message icon-comment-closed">
-                                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                        <path d="M8 9h8" />
-                                        <path d="M8 13h6" />
-                                        <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z" />
-                                    </svg>
-                                    <p class="total-comments"><%= post.totalComments %></p>
-                                </button>
-                                <% if (user.user_id===post.user_id) { %>
-                                    <!-- Edit button -->
-                                    <button
-                                        data-post-action="edit"
-                                        class="edit edit-button editing-disabled">
-                                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9725FB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-edit icon-edit-post">
-                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                            <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
-                                            <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
-                                            <path d="M16 5l3 3" />
-                                        </svg>
-                                    </button>
-                                    <!-- Done button -->
-                                    <button class="done edit-done-button"
-                                        data-post-action="done">
-                                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#83F97F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-square-rounded-check icon-edit-post-done">
-                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                            <path d="M9 12l2 2l4 -4" />
-                                            <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
-                                        </svg>
-                                    </button>
-                                    <!-- Delete button -->
-                                    <button data-post-action="delete" class="delete editing-disabled">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF0005" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
-                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                                            <path d="M4 7l16 0" />
-                                            <path d="M10 11l0 6" />
-                                            <path d="M14 11l0 6" />
-                                            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                                            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                                        </svg>
-                                    </button>
-                                <% } %>
-                            </div>
-                        </div>
-                        <div class="comment-section hidden">
-                            <form class="create-comment" onsubmit="insertNewComment(event)">
-                                <input name="username" value= <%= user.username %> type="hidden">
-                                <input name="postId" value= <%= post.post_id %> type="hidden">
-                                <textarea oninput="autoExpand(this)" placeholder="Write some comments..." rows="1" name="content" required></textarea>
-                                <div class="buttons">
-                                    <button type="submit" style="background-color: rgba(0, 92, 212, 0.774); font-size: 1.1rem; color: black; margin-top: 0px;">
-                                        <img src=".\assets\images\2849794_plane_paper airplane_send_airplane_multimedia_icon.png"
-                                            style="height: 17px; transform: translate(0,2px); pointer-events: none;">
-                                    </button>
-                                </div>
-                            </form>    
-                            <div class="comments">
-                                <ul>
-                                    <% for(comment of comments) {%>
-                                        <% if (comment.post_id === post.post_id) { %>
-                                            <li class="comment">
-                                                <h1><%= comment.username %></h1>
-                                                <p><%= comment.content %></p>
-                                            </li>
-                                        <% } %>   
-                                    <% } %>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <% } %>
-                    <% } else { %>
-                        <div id="no_posts_message" class="p-5 bg-white border-2 border-gray-200 rounded-lg mt-5">
-                            <h3 style="text-align: center;">No posts yet</h3>
-                        </div>
-                    <% } %>
+        <div id="post_list" class="w-full mt-4 gap-8 flex flex-col">
+            <div id="no_posts_yet" class="w-full flex flex-col items-center mt-10 gap-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-notes-off">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M7 3h10a2 2 0 0 1 2 2v10m0 4a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-14" />
+                    <path d="M11 7h4" />
+                    <path d="M9 11h2" />
+                    <path d="M9 15h4" />
+                    <path d="M3 3l18 18" />
+                </svg>
+                <h1 class="text-2xl font-bold text-center text-gray-500">No posts yet</h1>
+            </div>
         </div>
+
     </div>
 
     <script>
@@ -227,156 +111,9 @@
         let relatedUsers = <%- JSON.stringify(relatedUsers) %>;
         let userData = <%- JSON.stringify(user) %>;
 
-        async function postActionsHandler(event) {
-            const buttonsDiv = event.target.closest(".buttons");
-            const postDiv = event.target.closest(".post");
-            var targetImgTag = event.target.querySelector("img");
-
-            switch (event.target.dataset.postAction) { //extract only alphabet character
-                case "edit":
-                    editMode(postDiv, buttonsDiv, event.target, "on");
-                    break;
-
-                case "done":
-                    await editMode(postDiv, buttonsDiv, event.target, "off");
-                    break;
-
-                case "delete":
-                    await deletePost(postDiv);
-                    break;
-
-                case "like":
-                    const isThisPostLiked = postDiv.classList.contains("liked");
-                    if(isThisPostLiked) {
-                        unLikePost(postDiv);
-                        deleteLikeInDatabase(postDiv);
-                    } else {
-                        likePost(postDiv);
-                        likePostInDatabase(postDiv);
-                    }
-                    break;
-
-                case "open-comments":
-                    let isCommentsExpanded = postDiv.getAttribute("data-comment-expanded") === "true";
-                    isCommentsExpanded = !isCommentsExpanded;
-                    postDiv.setAttribute("data-comment-expanded", isCommentsExpanded);
-                    const commentSectionClass = postDiv.querySelector(".comment-section").classList;
-                    isCommentsExpanded ? commentSectionClass.remove("hidden") : commentSectionClass.add("hidden");
-                    break;
-
-                default:
-                    break;
-            }
-        }
-
-
-        async function editMode(postDiv, buttonsDiv, buttonClicked, editSwitch) {
-            var nextButtonToShow = buttonsDiv.querySelector(".hidden");
-            var title = postDiv.querySelector(".title");
-            var content = postDiv.querySelector(".content");
-            var postId = postDiv.querySelector(".postId").innerHTML;
-
-            switch (editSwitch) {
-                case "on":
-                    postDiv.setAttribute("data-post-editing", "true");
-                    title.contentEditable = true;
-                    title.classList.add("editMode");
-                    content.contentEditable = true;
-                    content.classList.add("editMode");
-                    focusToEndOfText(title);
-                    break;
-
-                case "off":
-                    await updatePostInDatabase(postId, title.innerText, content.innerText);
-                    postDiv.setAttribute("data-post-editing", "false");
-                    title.contentEditable = false;
-                    content.contentEditable = false;
-                    title.classList.remove("editMode");
-                    content.classList.remove("editMode");
-                    break;
-            }
-        }
-
-        function focusToEndOfText(target) {
-            target.focus();
-
-            var range = document.createRange();
-
-            range.selectNodeContents(target);
-
-            range.collapse(false);
-
-            var selection = window.getSelection();
-
-            selection.removeAllRanges();
-
-            selection.addRange(range);
-        }
-
-        function updatePostInDatabase(postId, title, content) {
-            return new Promise((resolve, reject) => {
-                fetch('update-post', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        postId: postId,
-                        title: title,
-                        content: content
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => resolve(data.message))
-                    .catch(data => reject(data.message))
-            })
-        }
-
-        async function deletePost(postDiv) {
-            var postId = postDiv.querySelector(".postId").innerHTML;
-
-            await deletePostInDatabase(postId);
-            postDiv.remove();
-        }
-
-        function deletePostInDatabase(postId) {
-            return new Promise((resolve, reject) => {
-                fetch('delete-post', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        postId: postId
-                    })
-                })
-                    .then(response => response.json())
-                    .then(message => resolve(message))
-                    .catch(message => reject(message))
-            })
-        }
-
-        function likePost(postDiv) {
-            const postId = postDiv.id.replace("post_", "");
-            const postObject = postData.find(post => post.post_id == postId);
-            if(postObject && postObject.totalLikes !== undefined) {
-                const totalLikesDiaplayer = postDiv.querySelector(".total-likes");
-                postObject.totalLikes++;
-                postDiv.classList.add("liked");
-                totalLikesDiaplayer.innerHTML = `${postObject.totalLikes}`;
-            }
-        }
-
-        function unLikePost(postDiv) {
-            const postId = postDiv.id.replace("post_", "");
-            const postObject = postData.find(post => post.post_id == postId);
-            if(postObject && postObject.totalLikes !== undefined) {
-                const totalLikesDiaplayer = postDiv.querySelector(".total-likes");
-                postObject.totalLikes--;
-                postDiv.classList.remove("liked");
-                totalLikesDiaplayer.innerHTML = `${postObject.totalLikes}`;
-            }
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            postData.forEach(post => createPostElement(post, 'post_list'))
+        })
 
         function likePostInDatabase(postDiv) {
             var postId = postDiv.querySelector(".postId").innerHTML;

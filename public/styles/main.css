@@ -132,6 +132,7 @@
 
   .dropdown-item:hover {
     background-color: #e5e7eb;
+    color: black;
   }
 
   .dropdown-menu {

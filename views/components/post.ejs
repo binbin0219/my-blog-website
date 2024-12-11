@@ -1,0 +1,301 @@
+<style>
+    /* post like */
+    .post .icon-like,
+    .post .icon-liked {
+        display: block;
+    }
+    .post[data-user-liked="true"] .icon-like {
+        display: none;
+    }
+    .post[data-user-liked="false"] .icon-liked {
+        display: none;
+    }
+
+    /* post comment */
+    .post .icon-comment-opened,
+    .post .icon-comment-closed {
+        display: none;
+    }
+    .post[data-comment-expanded="true"] {
+        .icon-comment-opened {
+            display: block;
+        }
+
+        .post-comment-section {
+            display: block;
+        }
+    }
+    .post[data-comment-expanded="false"] {
+        .icon-comment-closed {
+            display: block;
+        }
+
+        .post-comment-section {
+            display: none;
+        }
+    }
+
+    .post .edit-button,
+    .post .edit-done-button {
+        display: none;
+    }
+
+    .post[data-post-editing="false"] .edit-button {
+        display: block;
+    }
+
+    /* post edit mode */
+    .post[data-post-editing="true"] {
+        
+        .edit-done-button {
+            display: block;
+        }
+
+        .editing-disabled {
+            display: none;
+        }
+    }
+</style>
+
+<script>
+    const no_post_yet = document.createElement('div');
+    no_post_yet.innerHTML = 
+    `
+        <div id="no_posts_yet" class="w-full flex flex-col items-center mt-10 gap-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-notes-off">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <path d="M7 3h10a2 2 0 0 1 2 2v10m0 4a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-14" />
+                <path d="M11 7h4" />
+                <path d="M9 11h2" />
+                <path d="M9 15h4" />
+                <path d="M3 3l18 18" />
+            </svg>
+            <h1 class="text-2xl font-bold text-center text-gray-500">No posts yet</h1>
+        </div>
+    `
+    function createPostElement(post, containerId) {
+        const container = document.getElementById(containerId);
+        const postUser = relatedUsers.find(user => user.user_id === post.user_id);
+        const postElement = document.createElement('div');
+        postElement.setAttribute('data-user-liked', post.likedUsers.some(like => like.user_id === userData.user_id));
+        postElement.setAttribute('data-post-editing', 'false');
+        postElement.setAttribute('data-comment-expanded', 'false');
+        postElement.id = `post_${post.post_id}`;
+        postElement.className = 'post w-full rounded-lg p-3 flex flex-col gap-2 border rounded-lg bg-white';
+        postElement.innerHTML = 
+        `
+            <div class="flex flex-col gap-1">
+                <div class="flex gap-1 cursor-pointer">
+                    <img onclick="window.location.href='/user/profile/${postUser.user_id}'" class="w-[45px] h-[45px] rounded-full" src="${postUser.avatar}" alt="">
+                    <div class="flex flex-col">
+                        <h4 onclick="window.location.href='/user/profile/${postUser.user_id}'" class="font-bold hover:underline">${postUser.username}</h4>
+                        <h6 class="text-sm hover:underline">${post.date}</h6>
+                    </div>
+                </div>
+                <h1 class="post-title font-bold mt-3" style="word-wrap: break-word;">
+                    ${post.title}
+                </h1>
+                <p class="post-content" style="word-wrap: break-word;">
+                    ${post.content}
+                </p>
+            </div>
+            <div class="mt-3 border-t-2 border-gray-200">
+                <div class="buttons flex gap-5 mt-2 rounded-full p-3 items-center w-fit border-2 bg-slate-100 border-slate-300">
+                    <button
+                        data-post-action="toggle-like"
+                        style="color: black;"
+                        class="post-like-toggle flex gap-2 editing-disabled">
+                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#F9452C" stroke="#F9452C" class="icon icon-tabler icons-tabler-filled icon-tabler-heart icon-liked">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M6.979 3.074a6 6 0 0 1 4.988 1.425l.037 .033l.034 -.03a6 6 0 0 1 4.733 -1.44l.246 .036a6 6 0 0 1 3.364 10.008l-.18 .185l-.048 .041l-7.45 7.379a1 1 0 0 1 -1.313 .082l-.094 -.082l-7.493 -7.422a6 6 0 0 1 3.176 -10.215z" />
+                        </svg>
+                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F9452C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-heart icon-like">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
+                        </svg>
+                        <p class="total-likes">5</p>
+                    </button>
+                    <button 
+                        data-post-action="toggle-comment-section"
+                        class="comment flex gap-2 editing-disabled"
+                        style="color: black;">
+                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="#2293F9" stroke="#2293F9" class="icon icon-tabler icons-tabler-filled icon-tabler-message icon-comment-opened">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M18 3a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-4.724l-4.762 2.857a1 1 0 0 1 -1.508 -.743l-.006 -.114v-2h-1a4 4 0 0 1 -3.995 -3.8l-.005 -.2v-8a4 4 0 0 1 4 -4zm-4 9h-6a1 1 0 0 0 0 2h6a1 1 0 0 0 0 -2m2 -4h-8a1 1 0 1 0 0 2h8a1 1 0 0 0 0 -2" />
+                        </svg>
+                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2293F9" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-message icon-comment-closed">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M8 9h8" />
+                            <path d="M8 13h6" />
+                            <path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z" />
+                        </svg>
+                        <p class="total-comments">3</p>
+                    </button>
+                    ${ userData.user_id == post.user_id ?
+                    `
+                        <button
+                            data-post-action="edit-post"
+                            class="edit edit-button editing-disabled">
+                            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9725FB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-edit icon-edit-post">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" />
+                                <path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415z" />
+                                <path d="M16 5l3 3" />
+                            </svg>
+                        </button>
+                        <button class="done edit-done-button"
+                            data-post-action="finish-edit">
+                            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#83F97F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-square-rounded-check icon-edit-post-done">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M9 12l2 2l4 -4" />
+                                <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
+                            </svg>
+                        </button>
+                        <button data-post-action="delete-post" class="delete editing-disabled">
+                            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#FF0005" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 7l16 0" />
+                                <path d="M10 11l0 6" />
+                                <path d="M14 11l0 6" />
+                                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+                            </svg>
+                        </button>
+                    `
+                    :''}
+                </div>
+            </div>
+            <div class="post-comment-section">
+                <div class="comment-section">
+                    <img src="${userData.avatar}" class="w-[50px] h-[50px] rounded-full" alt="">    
+                    <input type="text" class="comment-input" placeholder="Add a comment">
+                </div>
+            </div>
+        `
+        // Append post to post list
+        container.appendChild(postElement);
+
+        // Remove no posts yet message if exist
+        container.querySelector('#no_posts_yet') && container.querySelector('#no_posts_yet').remove();
+
+        postElement.addEventListener('click', (e) => {
+            const target = e.target;
+            const postAction = target.getAttribute('data-post-action');
+            switch(postAction) {
+                case 'toggle-like':
+                    const isPostLiked = postElement.getAttribute('data-user-liked');
+                    if(isPostLiked == 'true') {
+                        postElement.setAttribute('data-user-liked', false);
+                    } else {
+                        postElement.setAttribute('data-user-liked', true);
+                    }
+                    break;
+
+                case 'toggle-comment-section':
+                    const isCommentExpanded = postElement.getAttribute('data-comment-expanded');
+                    if(isCommentExpanded == 'true') {
+                        postElement.setAttribute('data-comment-expanded', false);
+                    } else {
+                        postElement.setAttribute('data-comment-expanded', true);
+                    }
+                    break;
+
+                case 'edit-post':
+                case 'finish-edit':
+                    editMode(postElement);
+                    break;
+
+                case 'delete-post':
+                    fetch('/delete-post', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            postId: post.post_id
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        postElement.remove();
+
+                        const remainingPosts = container.querySelectorAll('.post');
+                        if(remainingPosts.length == 0) container.appendChild(no_post_yet);
+                    })
+                    .catch(error => console.log(error));
+                    break;
+                
+
+                default:
+                    break;
+            }
+        })
+    }
+
+    async function editMode(postDiv) {
+        const title = postDiv.querySelector(".post-title");
+        const content = postDiv.querySelector(".post-content");
+        const isPostEditing = postDiv.getAttribute("data-post-editing");
+        // const postId = postDiv.querySelector(".postId").innerHTML;
+
+        switch (isPostEditing) {
+            case "true":
+                const postId = Number(postDiv.id.replace("post_", ""));
+                await updatePostInDatabase(postId, title.innerText, content.innerText);
+                postDiv.setAttribute("data-post-editing", "false");
+                title.contentEditable = false;
+                content.contentEditable = false;
+                title.classList.remove('border-2', 'p-3', 'rounded-lg');
+                content.classList.remove('border-2', 'p-3', 'rounded-lg');
+                break;
+
+            case "false":
+                postDiv.setAttribute("data-post-editing", "true");
+                title.contentEditable = true;
+                title.classList.add('border-2', 'p-3', 'rounded-lg');
+                content.contentEditable = true;
+                content.classList.add('border-2', 'p-3', 'rounded-lg');
+                focusToEndOfText(title);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+
+    function updatePostInDatabase(postId, title, content) {
+        return new Promise((resolve, reject) => {
+            fetch('/update-post', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    postId: postId,
+                    title: title,
+                    content: content
+                })
+            })
+                .then(response => response.json())
+                .then(data => resolve(data.message))
+                .catch(data => reject(data.message))
+        })
+    }
+
+    function focusToEndOfText(target) {
+        target.focus();
+
+        var range = document.createRange();
+
+        range.selectNodeContents(target);
+
+        range.collapse(false);
+
+        var selection = window.getSelection();
+
+        selection.removeAllRanges();
+
+        selection.addRange(range);
+    }
+</script>

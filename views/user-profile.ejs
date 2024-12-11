@@ -1,0 +1,241 @@
+<%- include('./partials/header', { title: 'Home' }) %>
+<%- include('./components/post')  %>
+<%- include('./partials/navBar') %>
+
+<style>
+    body {
+        font-family: 'Calibri', sans-serif;
+    }
+
+    #section_buttons_container .active {
+        border-bottom-width: 4px;
+        color: black;
+    }
+</style>
+
+<!-- content -->
+<div 
+class="
+    flex flex-col mt-[65px] px-2
+    md:max-w-[800px] md:w-full md:mx-auto md:items-center md:justify-center
+">
+        <div class="w-full rounded-b-lg relative border overflow-hidden">
+            <img style="object-fit: cover;" class="w-full h-auto rounded-b-lg" src="https://static.vecteezy.com/system/resources/thumbnails/024/669/489/small_2x/mountain-countryside-landscape-at-sunset-dramatic-sky-over-a-distant-valley-green-fields-and-trees-on-hill-beautiful-natural-landscapes-of-the-carpathians-generative-ai-variation-5-photo.jpeg" alt="">
+            <div class="absolute top-0 left-0 w-full h-full bg-black/[0.2]">
+                <div class="w-full h-[85%] flex items-end justify-between px-2 relative border-b-2">
+                    <div class="flex gap-5 items-center">
+                        <img src="<%= profile_user.avatar %>" class="w-[100px] h-[100px] rounded-full translate-y-[40px]" alt="">
+                        <p class="text-white font-bold text-2xl items-center translate-y-[25px]"><%= profile_user.username %></p>
+                    </div>
+                    <button type="button" class="border-black border-2 px-3 py-2 rounded-lg bg-black bg-opacity-50 text-white mb-1 hover:bg-black hover:bg-opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-camera inline">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
+                            <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                        </svg>
+                        Edit Cover
+                    </button>
+                </div>
+                <div class="w-full h-[15%] bg-white">
+                    <div id="section_buttons_container" class="flex gap-2 h-full w-fit mx-auto">
+                        <button data-data-loaded="true" data-profile-section="posts_section" type="button" class="profile-section-toggle active h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4">
+                            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-inbox me-2">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" />
+                                <path d="M4 13h3l3 3h4l3 -3h3" />
+                            </svg>
+                            Posts
+                        </button>
+                        <button data-data-loaded="true" data-profile-section="about_section" type="button" class="profile-section-toggle h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4">
+                            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-id me-2">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M3 4m0 3a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v10a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3z" />
+                                <path d="M9 10m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0" />
+                                <path d="M15 8l2 0" />
+                                <path d="M15 12l2 0" />
+                                <path d="M7 16l10 0" />
+                            </svg>
+                            About
+                        </button>
+                        <button data-data-loaded="false" data-profile-section="friends_section" type="button" class="profile-section-toggle h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4">
+                            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-users me-2">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0" />
+                                <path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                <path d="M21 21v-2a4 4 0 0 0 -3 -3.85" />
+                            </svg>
+                            Friends
+                        </button>
+                        <button data-data-loaded="false" data-profile-section="photos_section" type="button" class="profile-section-toggle h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4">
+                            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-photo me-2">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M15 8h.01" />
+                                <path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" />
+                                <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" />
+                                <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" />
+                            </svg>
+                            Photos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div> 
+    <div id="profile_sections" class="w-full">
+        <div id="posts_section" class="w-full mt-4 gap-8 flex flex-col">
+            <div id="no_posts_yet" class="w-full flex flex-col items-center mt-10 gap-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-notes-off">
+                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                    <path d="M7 3h10a2 2 0 0 1 2 2v10m0 4a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-14" />
+                    <path d="M11 7h4" />
+                    <path d="M9 11h2" />
+                    <path d="M9 15h4" />
+                    <path d="M3 3l18 18" />
+                </svg>
+                <h1 class="text-2xl font-bold text-center text-gray-500">No posts yet</h1>
+            </div>
+        </div>
+        <div id="about_section" class="w-full mt-4 gap-8 flex flex-col hidden">
+            <div class="w-full flex flex-col rounded-lg border items-center">
+                <h1 class="p-4 font-bold text-2xl border-b w-full">About</h1>
+                <div class="border-b flex gap-3 w-[95%] p-4">
+                    <div class="flex gap-3 w-[50%]">
+                        <div class="w-[45px] h-[45px] border rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-signature">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M3 17c3.333 -3.333 5 -6 5 -8c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 4.877 2.5 6c1.5 2 2.5 2.5 3.5 1l2 -3c.333 2.667 1.333 4 3 4c.53 0 2.639 -2 3 -2c.517 0 1.517 .667 3 2" />
+                            </svg>
+                        </div> 
+                        <div class="flex flex-col">
+                            <h4 class="font-bold">Name</h4>
+                            <h6 class="text-sm"><%= profile_user.first_name %> <%= profile_user.last_name %></h6>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 w-[50%]">
+                        <div class="w-[45px] h-[45px] border rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-gender-male">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M10 14m-5 0a5 5 0 1 0 10 0a5 5 0 1 0 -10 0" />
+                                <path d="M19 5l-5.4 5.4" />
+                                <path d="M19 5h-5" />
+                                <path d="M19 5v5" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-bold">Gender</h4>
+                            <h6 class="text-sm"><%= profile_user.gender %></h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-b flex gap-3 w-[95%] p-4">
+                    <div class="flex gap-3 w-[50%]">
+                        <div class="w-[45px] h-[45px] border rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-map-pin">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M9 11a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
+                                <path d="M17.657 16.657l-4.243 4.243a2 2 0 0 1 -2.827 0l-4.244 -4.243a8 8 0 1 1 11.314 0z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-bold">Location</h4>
+                            <h6 class="text-sm">From Malaysia, Johor</h6>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 w-[50%]">
+                        <div class="w-[45px] h-[45px] border rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-heart">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-bold">Relationship</h4>
+                            <h6 class="text-sm">Single</h6>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-b flex gap-3 w-[95%] p-4">
+                    <div class="flex gap-3 w-[50%]">
+                        <div class="w-[45px] h-[45px] border rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-briefcase">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M3 7m0 2a2 2 0 0 1 2 -2h14a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2z" />
+                                <path d="M8 7v-2a2 2 0 0 1 2 -2h4a2 2 0 0 1 2 2v2" />
+                                <path d="M12 12l0 .01" />
+                                <path d="M3 13a20 20 0 0 0 18 0" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-bold">Occupation</h4>
+                            <h6 class="text-sm">Web Developer</h6>
+                        </div>
+                    </div>
+                    <div class="flex gap-3 w-[50%]">
+                        <div class="w-[45px] h-[45px] border rounded-full flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-copyleft">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0" />
+                                <path d="M10 9.75a3.016 3.016 0 0 1 4.163 .173a2.993 2.993 0 0 1 0 4.154a3.016 3.016 0 0 1 -4.163 .173" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-bold">Company Name</h4>
+                            <h6 class="text-sm">Mimar Tech Sdn Bhd</h6>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="friends_section" class="w-full mt-4 gap-8 flex flex-col hidden">
+    
+        </div>
+        <div id="photos_section" class="w-full mt-4 gap-8 flex flex-col hidden">
+    
+        </div>
+    </div>
+</div>
+
+<script>
+    const userData = <%- JSON.stringify(user) %>;
+    const relatedUsers = <%- JSON.stringify(related_users) %>;
+    const profileUser = <%- JSON.stringify(profile_user) %>;
+    const initialPosts = <%- JSON.stringify(posts) %>;
+
+    const section_buttons_container = document.getElementById('section_buttons_container');
+    section_buttons_container && section_buttons_container.addEventListener('click', e => {
+        if(!e.target.classList.contains('profile-section-toggle')) return;
+        const clickedButton = e.target;
+        const selectedSectionId = clickedButton.getAttribute('data-profile-section');
+        const activeButton = section_buttons_container.querySelector('.active');
+        const activeSectionId = activeButton.getAttribute('data-profile-section');
+        if(activeSectionId == selectedSectionId) return;
+        
+        // Hide current section
+        const activeSection = document.getElementById(activeSectionId);
+        activeSection.classList.add('hidden');
+        activeButton.classList.remove('active');
+
+        // Show selected section
+        const selectedSection = document.getElementById(selectedSectionId);
+        selectedSection.classList.remove('hidden');
+        clickedButton.classList.add('active');
+
+        // Load data
+        const isDataLoaded = clickedButton.getAttribute('data-data-loaded');
+        if(isDataLoaded == 'false') {
+            switch(selectedSectionId) {
+                default:
+                    break;
+            }
+        }
+    })
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const postList = document.getElementById('posts_section');
+        if(postList && initialPosts.length > 0) {
+            initialPosts.forEach(post => createPostElement(post, 'posts_section'));
+        }
+    })
+</script>
+
+<%- include('./partials/footer') %>
