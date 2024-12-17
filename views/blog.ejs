@@ -3,8 +3,8 @@
 <%- include('./partials/navBar') %>
     <link rel="stylesheet" href="./styles/blog.css">
 
-    <div class="middle">
-        <form id="create_post_form" class="create-post h-[105px] overflow-y-hidden relative" action="/create-post" method="post" style="transition: all .5s ease-out;">
+    <div class="middle px-2">
+        <form id="create_post_form" class="create-post h-[105px] overflow-y-hidden relative" action="/create-post" method="post" style="transition: all .3s linear;">
             <div class="flex gap-4 items-center mb-6 w-full cursor-pointer">
                 <img onclick="window.location.href='/user/profile/<%= user.user_id %>'" class="w-[45px] h-[45px] rounded-full" src="<%= user.avatar %>" alt="">
                 <div class="flex flex-col">
@@ -47,7 +47,7 @@
                         document.getElementById('create_post_form').classList.add('h-[430px]');
                     "
                 >
-                    <p class="text-md" style="color: #269950;">Create Post</p>
+                    <!-- <p class="text-md" style="color: #269950;">Create Post</p> -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#269950" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-plus">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path d="M12 5l0 14" />
@@ -107,86 +107,11 @@
     </div>
 
     <script>
-        let postData = <%- JSON.stringify(posts) %>;
         let relatedUsers = <%- JSON.stringify(relatedUsers) %>;
-        let userData = <%- JSON.stringify(user) %>;
 
         document.addEventListener('DOMContentLoaded', () => {
             postData.forEach(post => createPostElement(post, 'post_list'))
         })
-
-        function likePostInDatabase(postDiv) {
-            var postId = postDiv.querySelector(".postId").innerHTML;
-
-            fetch('like-post', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    postId: postId,
-                    userId: "<%= user.user_id %>",
-                })
-            })
-        }
-
-        function deleteLikeInDatabase(postDiv) {
-            var postId = postDiv.querySelector(".postId");
-
-            fetch('delete-like-post', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    postId: postId.innerHTML,
-                    userId: "<%= user.user_id %>",
-                })
-            })
-        }
-
-        function autoExpand(textarea) {
-                // Reset the height to default to recalculate the scroll height
-                textarea.style.height = 'inherit';
-
-                // Set the height of the textarea to fit its content
-                textarea.style.height = (textarea.scrollHeight - 20) + 'px';
-        }
-
-        function insertNewComment(event) {
-            event.preventDefault();
-
-            const commentList = event.target.parentElement.querySelector(".comments ul");
-            const newComment = document.createElement('li');
-            const username = event.target.elements['username'].value;
-            const postId = event.target.elements['postId'].value;
-            const content = event.target.elements['content'].value;
-            
-            newComment.className = 'comment';
-            newComment.innerHTML = `
-                <h1>${username}</h1>
-                <p>${content}</p>
-            `;
-
-            commentList.insertBefore(newComment, commentList.firstChild);
-            createCommentInDatabase(postId, content);
-            event.target.elements['content'].value = "";
-        }
-
-        function createCommentInDatabase(postId, content) {
-            fetch('create-comment', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    postId: postId,
-                    userId: "<%= user.user_id %>",
-                    username: "<%= user.username %>",
-                    content: content
-                })
-            })
-        }
     </script>
 
 <%- include('./partials/footer') %>

@@ -3,6 +3,7 @@ import path from "path"
 import { runQuery } from "../databaseSetup.js";
 import fs from "fs"
 import { userAvatarDirPath, userAvatarFormat } from "../config.js";
+import { getNotifications } from "../notification.js";
 
 const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
 function isUserAuthorized(req, res, next) {
@@ -13,8 +14,13 @@ function isUserAuthorized(req, res, next) {
                 console.log(err);
                 return res.redirect('/login');
             } else {
+                const user = await runQuery("SELECT * FROM users WHERE user_id = $1", [decodedToken.user_id]);
+
+                // Get nitifications
+                const notifications = await getNotifications(user[0].user_id);
+                user[0].notifications = notifications;
+
                 // Get user data and its avatar
-                const user = await runQuery("SELECT * FROM users WHERE user_id = $1", [decodedToken.userid]);
                 const filePath = path.join(userAvatarDirPath, `user_avatar_${user[0].user_id}.${userAvatarFormat}`);
                 if(fs.existsSync(filePath)) {
                     const avatarBuffer = fs.readFileSync(filePath);

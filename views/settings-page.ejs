@@ -5,6 +5,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.css">
 
+<!-- Country-Region-Selector -->
+<script src="/js/crs.min.js"></script>
+
 <style>
     body {
         font-family: 'Calibri', sans-serif;
@@ -101,6 +104,10 @@ class="
             </div>
         </div>
         <div class="flex flex-col mt-8 gap-5">
+            <div>
+                <label for="username_input" class="block font-bold">Username</label>
+                <input id="username_input" type="text" name="username" value="<%= user.username %>" placeholder="username" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+            </div>
             <div class="flex w-full justify-between">
                 <div class="w-[45%]">
                     <label for="first_name_input" class="block font-bold">Fist name</label>
@@ -141,9 +148,118 @@ class="
                     </div>
                 </div>
             </div>
+            <div class="flex w-full justify-between">
+                <div class="w-[45%]">
+                    <label for="country_selector" class="block font-bold">Country</label>
+                    <select data-default-value="<%= user.country %>" data-region-id="region_selector" id="country_selector" name="country" value="Malaysia" class="crs-country px-3 py-2 border-2 border-slate-200 rounded-lg w-full"></select>
+                </div>
+                <div class="w-[45%]">
+                    <label for="region_selector" class="block font-bold">Region</label>
+                    <select data-default-value="<%= user.region %>" id="region_selector" name="region" placeholder="Select Your Region" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full"></select>
+                </div>
+            </div>
+            <div class="flex w-full justify-between">
+                <div class="w-[45%]">
+                    <label for="relationship_status_selector" class="block font-bold">Relationship Status</label>
+                    <select id="relationship_status_selector" name="relationshipStatus" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                        <option data-index="0" selected value="">Not Specified</option>
+                        <option data-index="1" value="Single">Single</option>
+                        <option data-index="2" value="Married">Married</option>
+                        <option data-index="3" value="Divorced">Divorced</option>
+                        <option data-index="4" value="Widowed">Widowed</option>
+                        <option data-index="5" value="Separated">Separated</option>
+                        <option data-index="6" value="Looking For Relationship">Other</option>
+                        <option data-index="7" value="It's Complicated">It's Complicated</option>
+                        <option data-index="8" value="Forever Alone">Forever Alone</option>
+                    </select>
+                </div>
+                <div class="w-[45%]">
+                    <label for="occupation_selector" class="block font-bold">Occupation</label>
+                    <select id="occupation_selector" name="occupation" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                        <option value="" selected data-index="0">Not Specified</option>
+
+                        <!-- Technology & IT -->
+                        <optgroup label="Technology & IT">
+                            <option value="Software Engineer" data-index="1">Software Engineer</option>
+                            <option value="Web Developer" data-index="2">Web Developer</option>
+                            <option value="Data Scientist" data-index="3">Data Scientist</option>
+                            <option value="IT Specialist" data-index="4">IT Specialist</option>
+                            <option value="Cybersecurity Analyst" data-index="5">Cybersecurity Analyst</option>
+                        </optgroup>
+
+                        <!-- Healthcare -->
+                        <optgroup label="Healthcare">
+                            <option value="Doctor" data-index="6">Doctor</option>
+                            <option value="Nurse" data-index="7">Nurse</option>
+                            <option value="Pharmacist" data-index="8">Pharmacist</option>
+                            <option value="Therapist" data-index="9">Therapist</option>
+                            <option value="Medical Technician" data-index="10">Medical Technician</option>
+                        </optgroup>
+
+                        <!-- Education -->
+                        <optgroup label="Education">
+                            <option value="Teacher" data-index="11">Teacher</option>
+                            <option value="Professor" data-index="12">Professor</option>
+                            <option value="Academic Researcher" data-index="13">Academic Researcher</option>
+                            <option value="Tutor" data-index="14">Tutor</option>
+                        </optgroup>
+
+                        <!-- Business & Finance -->
+                        <optgroup label="Business & Finance">
+                            <option value="Accountant" data-index="15">Accountant</option>
+                            <option value="Financial Analyst" data-index="16">Financial Analyst</option>
+                            <option value="Marketing Specialist" data-index="17">Marketing Specialist</option>
+                            <option value="Entrepreneur" data-index="18">Entrepreneur</option>
+                            <option value="HR Manager" data-index="19">HR Manager</option>
+                        </optgroup>
+
+                        <!-- Engineering & Construction -->
+                        <optgroup label="Engineering & Construction">
+                            <option value="Civil Engineer" data-index="20">Civil Engineer</option>
+                            <option value="Mechanical Engineer" data-index="21">Mechanical Engineer</option>
+                            <option value="Architect" data-index="22">Architect</option>
+                            <option value="Electrician" data-index="23">Electrician</option>
+                            <option value="Construction Worker" data-index="24">Construction Worker</option>
+                        </optgroup>
+
+                        <!-- Creative Arts & Media -->
+                        <optgroup label="Creative Arts & Media">
+                            <option value="Graphic Designer" data-index="25">Graphic Designer</option>
+                            <option value="Writer/Author" data-index="26">Writer/Author</option>
+                            <option value="Photographer" data-index="27">Photographer</option>
+                            <option value="Film Maker" data-index="28">Film Maker</option>
+                            <option value="Musician" data-index="29">Musician</option>
+                        </optgroup>
+
+                        <!-- Skilled Trades -->
+                        <optgroup label="Skilled Trades">
+                            <option value="Chef" data-index="30">Chef</option>
+                            <option value="Carpenter" data-index="31">Carpenter</option>
+                            <option value="Plumber" data-index="32">Plumber</option>
+                            <option value="Mechanic" data-index="33">Mechanic</option>
+                        </optgroup>
+
+                        <!-- Public Service & Law -->
+                        <optgroup label="Public Service & Law">
+                            <option value="Police Officer" data-index="34">Police Officer</option>
+                            <option value="Firefighter" data-index="35">Firefighter</option>
+                            <option value="Lawyer" data-index="36">Lawyer</option>
+                            <option value="Social Worker" data-index="37">Social Worker</option>
+                        </optgroup>
+
+                        <!-- Science & Research -->
+                        <optgroup label="Science & Research">
+                            <option value="Biologist" data-index="38">Biologist</option>
+                            <option value="Physicist" data-index="39">Physicist</option>
+                            <option value="Chemist" data-index="40">Chemist</option>
+                            <option value="Researcher" data-index="41">Researcher</option>
+                        </optgroup>
+                    </select>
+                </div>
+            </div>
             <div>
-                <label for="username_input" class="block font-bold">Username</label>
-                <input id="username_input" type="text" name="username" value="<%= user.username %>" placeholder="username" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full">
+                <label for="phone_number_input" class="block font-bold">Phone Number</label>
+                <input id="phone_number_input" value="<%= user.phone_number && user.phone_number.phoneNumberBody %>" name="phoneNumber" class="px-3 py-2 border-2 border-slate-200 rounded-lg w-full outline-none">
             </div>
             <div>
                 <label for="accountName" class="block font-bold">Account name</label>
@@ -169,6 +285,18 @@ class="
 </div>
 
 <script>
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Set relationship status from user data
+        const relStaSelector = document.querySelector('#relationship_status_selector');
+        const userRelStaOption = relStaSelector.querySelector(`option[value="<%- user.relationship_status %>"]`);
+        relStaSelector.selectedIndex = userRelStaOption.getAttribute('data-index');
+
+        const occupationSelector = document.querySelector('#occupation_selector');
+        const userOccOption = occupationSelector.querySelector(`option[value="<%- user.occupation %>"]`);
+        occupationSelector.selectedIndex = userOccOption.getAttribute('data-index');
+    })
+
     // gender radio
     const genderRadio = document.querySelectorAll('.gender-radio');
     genderRadio && genderRadio.forEach((radio) => {
@@ -249,6 +377,17 @@ class="
         })
     })
 
+    // Phone number input
+    const phoneNumberInput = document.querySelector('#phone_number_input');
+    phoneNumberInput && phoneNumberInput.addEventListener('input', () => {
+        const isNumberValid = iti.isValidNumber();
+        if(isNumberValid) {
+            phoneNumberInput.classList.remove('border-red-500');
+        } else {
+            phoneNumberInput.classList.add('border-red-500');
+        }
+    })
+
     // Save changes button
     const saveChangesBtn = document.querySelector('#save_changes_btn');
     saveChangesBtn && saveChangesBtn.addEventListener('click', () => {
@@ -262,20 +401,45 @@ class="
         const username = document.querySelector('#username_input').value;
         const firstName = document.querySelector('#first_name_input').value;
         const lastName = document.querySelector('#last_name_input').value;
+        const country = document.querySelector('#country_selector').value;
+        const region = document.querySelector('#region_selector').value;
+        const relationshipStatus = document.querySelector('#relationship_status_selector').value;
+        const occupation = document.querySelector('#occupation_selector').value;
+
+        // Get phone number data
+        const phoneNumberDetails = iti.getSelectedCountryData();
+        const isNumberValid = iti.isValidNumber();
+        let phoneNumber = null;
+        if(Object.keys(phoneNumberDetails).length !== 0 && isNumberValid) {
+            phoneNumber = {
+                dialCode: phoneNumberDetails.dialCode,
+                phoneNumberBody: document.querySelector('#phone_number_input').value,
+                fullNumber: `+${phoneNumberDetails.dialCode}${document.querySelector('#phone_number_input').value}`,
+                countryISO2: phoneNumberDetails.iso2,
+                countryName: phoneNumberDetails.name,
+            }
+        }
+        
+        const requestBody = {
+            user_id: <%= user.user_id %>,
+            avatar_base64: avatarBase64,
+            gender: gender[0].toUpperCase() + gender.slice(1),
+            username: username,
+            first_name: firstName,
+            last_name: lastName,
+        }
+        phoneNumber && (requestBody['phone_number'] = JSON.stringify(phoneNumber));
+        country !== "" && (requestBody['country'] = country);
+        region !== "" && (requestBody['region'] = region);
+        relationshipStatus !== "" && (requestBody['relationship_status'] = relationshipStatus);
+        occupation !== "" && (requestBody['occupation'] = occupation);
 
         fetch('/api/user-profile/update', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                user_id: <%= user.user_id %>,
-                avatar_base64: avatarBase64,
-                gender: gender[0].toUpperCase() + gender.slice(1),
-                username: username,
-                first_name: firstName,
-                last_name: lastName,
-            })
+            body: JSON.stringify(requestBody)
         })
         .then(res => res.json())
         .then(data => {
@@ -291,6 +455,19 @@ class="
             saveChangesBtn.classList.remove('button-disabled');
         })
     })
+</script>
+
+<!-- Intl-tel-input -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@25.2.0/build/css/intlTelInput.css">
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@25.2.0/build/js/intlTelInput.min.js"></script>
+<script>
+    const input = document.querySelector("#phone_number_input");
+    const iti = window.intlTelInput(document.querySelector("#phone_number_input"), {
+        loadUtils: () => import("https://cdn.jsdelivr.net/npm/intl-tel-input@25.2.0/build/js/utils.js"),
+        containerClass: "w-full",
+        separateDialCode: true,
+        initialCountry: "<%= user.phone_number && user.phone_number.countryISO2 %>",
+    });
 </script>
 
 <%- include('./partials/footer') %>

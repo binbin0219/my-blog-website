@@ -13,22 +13,20 @@ const db = new pg.Pool({
     database: 'social_media_website',
 });
 const createTableQueries = [
-  `CREATE TABLE IF NOT EXISTS "public"."comments" (
-    "comment_id" SERIAL PRIMARY KEY,
-    "post_id" INTEGER,
-    "user_id" INTEGER,
-    "username" VARCHAR(200),
-    "content" VARCHAR(500),
-    FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE,
-    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE
-  );`,
-
-  `CREATE TABLE IF NOT EXISTS "public"."likes" (
-    "like_id" SERIAL PRIMARY KEY,
-    "user_id" INTEGER,
-    "post_id" INTEGER,
-    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE,
-    FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE
+  `CREATE TABLE IF NOT EXISTS "public"."users" (
+    "user_id" SERIAL PRIMARY KEY,
+    "account_name" VARCHAR(50),
+    "gender" VARCHAR(20),
+    "username" VARCHAR(50),
+    "first_name" VARCHAR(50),
+    "last_name" VARCHAR(50),
+    "password" VARCHAR(200),
+    "occupation" VARCHAR(50),
+    "relationship_status" VARCHAR(50),
+    "country" VARCHAR(50),
+    "region" VARCHAR(50),
+    "phone_number" JSONB,
+    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );`,
 
   `CREATE TABLE IF NOT EXISTS "public"."posts" (
@@ -38,16 +36,53 @@ const createTableQueries = [
     "content" VARCHAR(500),
     "date" VARCHAR(50),
     "username" VARCHAR(100),
+    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE
   );`,
 
-  `CREATE TABLE IF NOT EXISTS "public"."users" (
-    "user_id" SERIAL PRIMARY KEY,
-    "account_name" VARCHAR(50),
-    "gender" VARCHAR(20),
-    "username" VARCHAR(50),
-    "password" VARCHAR(200)
+  `CREATE TABLE IF NOT EXISTS "public"."comments" (
+    "comment_id" SERIAL PRIMARY KEY,
+    "post_id" INTEGER,
+    "user_id" INTEGER,
+    "username" VARCHAR(200),
+    "content" VARCHAR(500),
+    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE
   );`,
+
+  `CREATE TABLE IF NOT EXISTS "public"."likes" (
+    "like_id" SERIAL PRIMARY KEY,
+    "user_id" INTEGER,
+    "post_id" INTEGER,
+    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE,
+    FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE
+  );`,
+
+  `CREATE TABLE IF NOT EXISTS "public"."notifications" (
+    "notification_id" SERIAL PRIMARY KEY,
+    "user_id" INTEGER NOT NULL,
+    "sender_id" INTEGER,
+    "type" VARCHAR(100) NOT NULL,
+    "content" TEXT NOT NULL,
+    "link" TEXT,
+    "seen" BOOLEAN DEFAULT false,
+    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE,
+    FOREIGN KEY ("sender_id") REFERENCES "users" ("user_id") ON DELETE CASCADE
+  );
+  `,
+  `CREATE TABLE IF NOT EXISTS "public"."friendships" (
+    "friendship_id" SERIAL PRIMARY KEY,
+    "user_id" INTEGER NOT NULL,
+    "friend_id" INTEGER NOT NULL,
+    "sender_id" INTEGER NOT NULL,
+    "status" VARCHAR(100) NOT NULL CHECK ("status" IN ('pending', 'accepted', 'rejected')),
+    "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE,
+    FOREIGN KEY ("friend_id") REFERENCES "users" ("user_id") ON DELETE CASCADE
+  )`
 ];
 
 export default async function databaseSetup() {

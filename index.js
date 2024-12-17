@@ -9,6 +9,7 @@ import path from "path"
 import sharp from "sharp"
 import { authenticateToken, isUserAuthorized } from "./middleware/auth.js"
 import { __dirname, userAvatarDirPath, userAvatarFormat } from "./config.js"
+import { getNotifications } from "./notification.js"
 
 // Connect to the database
 const db = await databaseSetup();
@@ -92,6 +93,17 @@ app.get('/user/profile/:user_id', isUserAuthorized, async (req, res) => {
     const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
     foundUser[0].avatar = avatar;
 
+    // Identify if is friend with current user
+    const friendship = await runQuery(
+        "SELECT * FROM friendships WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)", [
+        res.locals.user.user_id, 
+        req.params.user_id
+    ]);
+    if(friendship.length > 0) foundUser[0].friendship = {
+        status: friendship[0].status,
+        sender_id: friendship[0].sender_id
+    }
+
     // Get all posts from user
     const userPosts = await runQuery("SELECT * FROM posts WHERE user_id = $1 ORDER BY post_id DESC", [req.params.user_id]);
 
@@ -103,8 +115,8 @@ app.get('/user/profile/:user_id', isUserAuthorized, async (req, res) => {
             post.likedUsers = likedUsers;
     
             // Add total comments
-            const totalComments = await runQuery("SELECT COUNT(*) FROM comments WHERE post_id = $1", [post.post_id]);
-            post.totalComments = totalComments.length;
+            const comments = await runQuery("SELECT * FROM comments WHERE post_id = $1", [post.post_id]);
+            post.comments = comments;
     
             const isUserAdded = relatedUsers.find(user => user.user_id === post.user_id);
             if(isUserAdded !== undefined) return;
@@ -158,8 +170,8 @@ app.get('/', isUserAuthorized, async (req, res) => {
                 post.likedUsers = likedUsers;
         
                 // Add total comments
-                const totalComments = await runQuery("SELECT COUNT(*) FROM comments WHERE post_id = $1", [post.post_id]);
-                post.totalComments = totalComments.length;
+                const comments = await runQuery("SELECT * FROM comments WHERE post_id = $1", [post.post_id]);
+                post.comments = comments;
         
                 const isUserAdded = relatedUsers.find(user => user.user_id === post.user_id);
                 if(isUserAdded !== undefined) return;
@@ -225,21 +237,24 @@ app.post("/signing-up", async (req, res) => {
         .toFormat(`${userAvatarFormat}`)
         .toFile(userAvatarDirPath + `/user_avatar_${nextUserId}.${userAvatarFormat}`);
 
+        console.log(req.body)
+
         // Insert the new user
+        const queryString = 'INSERT INTO users VALUES '
         const insertedRow = await runQuery("INSERT INTO users VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *", [
             nextUserId,
-            req.body.accountName, 
+            req.body.accountName.trim(), 
             req.body.Gender,
-            req.body.Username, 
-            hashedPassword,
-            req.body.firstName,
-            req.body.lastName
+            req.body.Username.trim(), 
+            req.body.firstName.trim(),
+            req.body.lastName.trim(),
+            hashedPassword
         ])
 
         // Generate a JWT
         const maxAge = 3 * 60 * 60;
         const token = jwt.sign(
-            {userid: insertedRow[0].user_id, username: insertedRow[0].username},
+            {user_id: insertedRow[0].user_id, username: insertedRow[0].username},
             jwtSecret,
             {expiresIn: maxAge}
         );
@@ -290,7 +305,7 @@ app.post('/logging-in', async (req, res) => {
     .then((foundUser) => {
         const maxAge = 3 * 60 * 60;
         const token = jwt.sign(
-            {userid: foundUser[0].user_id, username: foundUser[0].username},
+            {user_id: foundUser[0].user_id, username: foundUser[0].username},
             jwtSecret,
             {expiresIn: maxAge}
         );
@@ -331,7 +346,7 @@ app.post('/update-post', async (req,res)=> {
     .then(()=> res.status(200).json({message: "Update successful"}))
     .catch(error => {
         console.log(error);
-        res.status(500).json({message: "Update unsuccessul: " + error});
+        res.status(500).json({message: "Update unsuccessul"});
     })
 })
 
@@ -340,22 +355,38 @@ app.post('/delete-post',(req,res) =>{
     .then(()=> res.status(201).json({message: "Delete successfully"}))
     .catch( error => {
         console.log(error);
-        res.status(500).json({message: "Delete failed: " + error})
+        res.status(500).json({message: "Delete failed"})
     })
 })
 
 app.post('/like-post',async (req,res)=> {
-    const result = await runQuery("SELECT like_id FROM likes ORDER BY like_id DESC LIMIT 1");
+    const like = await runQuery("SELECT like_id FROM likes ORDER BY like_id DESC LIMIT 1");
 
     runQuery("INSERT INTO likes VALUES($1,$2,$3)" , [
-        result[0] ? result[0].like_id + 1 : 1,
+        like[0] ? like[0].like_id + 1 : 1,
         req.body.userId,
         req.body.postId
     ])
-    .then(()=> res.status(201).json({message: "Like post successfully"}))
+    .then(async ()=> {
+        const post = await runQuery("SELECT * FROM posts WHERE post_id = $1", [req.body.postId]);
+        const senderName = await runQuery("SELECT username FROM users WHERE user_id = $1", [req.body.userId]);
+
+        // Create notification if user is not the post owner
+        if(Number(post[0].user_id) !== Number(req.body.userId)) {
+            await runQuery("INSERT INTO notifications (user_id, sender_id, type, content, link) VALUES ($1, $2, $3, $4, $5)" , [
+                post[0].user_id,
+                Number(req.body.userId),
+                "like",
+                `${senderName[0].username} liked your post "${post[0].title}"`,
+                `/post/${req.body.postId}`
+            ])
+        }
+
+        res.status(201).json({message: "Like post successfully"});
+    })
     .catch( error => {
         console.log(error);
-        res.status(500).json({message: "Like post failed: " + error})
+        res.status(500).json({message: "Like post failed"})
     })
 })
 
@@ -365,7 +396,7 @@ app.post('/delete-like-post',(req,res)=> {
     .then(()=> res.status(201).json({message: "Delete like post successfully"}))
     .catch( error => {
         console.log(error);
-        res.status(500).json({message: "Delete like post failed: " + error})
+        res.status(500).json({message: "Delete like post failed"})
     })
 })
 
@@ -383,7 +414,7 @@ app.post('/create-comment', async (req,res)=> {
     .then(()=> res.status(201).json({message: "comment created successfully"}))
     .catch( error => {
         console.log(error);
-        res.status(500).json({message: "Failed to create comment: " + error})
+        res.status(500).json({message: "Failed to create comment"})
     })
 })
 
@@ -413,14 +444,31 @@ app.get('/api/random-avatar/:gender', async (req, res) => {
 
 app.post('/api/user-profile/update', authenticateToken, async (req, res) => {
     try {
-        const userId = req.user.userid;
+        const userId = req.user.user_id;
         const avatarBase64 = req.body.avatar_base64.split(',')[1];
-        const queryString = `UPDATE users SET gender = $1, username = $2, first_name = $3, last_name = $4 WHERE user_id = ${userId}`;
+        const queryString = `
+            UPDATE users SET 
+            gender = $1, 
+            username = $2, 
+            first_name = $3, 
+            last_name = $4, 
+            phone_number = $5,
+            country = $6,
+            region = $7,
+            relationship_status = $8,
+            occupation = $9
+            WHERE user_id = ${userId}
+        `;
         const queryValues = [
             req.body.gender,
             req.body.username,
             req.body.first_name,
             req.body.last_name,
+            req.body.phone_number ?? null,
+            req.body.country ?? null,
+            req.body.region ?? null,
+            req.body.relationship_status ?? null,
+            req.body.occupation ?? null
         ];
     
         // Save avatar to file
@@ -439,6 +487,149 @@ app.post('/api/user-profile/update', authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Failed to update profile' });
     }
     
+})
+
+app.get('/api/notifications/:user_id', authenticateToken, async (req, res) => {
+    const userId = req.params.user_id;
+    const notifications = await getNotifications(userId);
+    // const notifications = await runQuery("SELECT * FROM notifications WHERE user_id = $1 ORDER BY notification_id DESC", [userId]);
+    // if(notifications.length === 0) return res.status(200).json({message: "No notifications found"});
+
+    // // Get sender avatar
+    // notifications.forEach(notification => {
+    //     const filePath = path.join(userAvatarDirPath, `user_avatar_${notification.sender_id}.${userAvatarFormat}`);
+    //     if(fs.existsSync(filePath)) {
+    //         const avatarBuffer = fs.readFileSync(filePath);
+    //         const base64avatar = Buffer.from(avatarBuffer).toString('base64');
+    //         const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`;
+    //         notification.sender_avatar = avatar;
+    //     } 
+    // })
+
+    notifications.length === 0 ? res.status(200).json({message: "No notifications found"}) : res.json(notifications);
+})
+
+app.delete('/api/notifications/delete/:notification_id', authenticateToken, async (req, res) => {
+    try {
+        const user_id = req.user.user_id;
+        const notification_id = req.params.notification_id;
+        await runQuery("DELETE FROM notifications WHERE user_id = $1 AND notification_id = $2", [user_id, notification_id]);
+        res.status(200).json({message: "Notification deleted successfully"});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Failed to delete notification"});
+    }
+})
+
+app.get('/api/friend-request/send/:user_id', authenticateToken, async (req, res) => {
+    try{
+        const friend_id = req.params.user_id;
+        const user_id = req.user.user_id;
+
+        // Check if friendship already exists
+        const friendship = await runQuery("SELECT * FROM friendships WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)", [user_id, friend_id]);
+        if (friendship.length > 0 && friendship[0].status !== 'rejected') return res.status(400).json({message: "Friendship already exists"});
+
+        if(friendship.length > 0 && friendship[0].status === 'rejected') {
+            // Update friendship status
+            await runQuery("UPDATE friendships SET status = 'pending', sender_id = $1 WHERE user_id = $2 AND friend_id = $3", [user_id, user_id, friend_id]);
+            await runQuery("UPDATE friendships SET status = 'pending', sender_id = $1 WHERE user_id = $2 AND friend_id = $3", [user_id, friend_id, user_id]);
+        } else {
+            // Create friendship
+            await runQuery("INSERT INTO friendships (user_id, friend_id, sender_id, status) VALUES ($1, $2, $3, $4)", [user_id, friend_id, user_id, 'pending']);
+            await runQuery("INSERT INTO friendships (user_id, friend_id, sender_id, status) VALUES ($1, $2, $3, $4)", [friend_id, user_id, user_id, 'pending']);
+        }
+    
+        // Create friend request notification
+        await runQuery("INSERT INTO notifications (user_id, sender_id, type, content, link) VALUES ($1, $2, $3, $4, $5)" , [
+            friend_id,
+            user_id,
+            "friend_request",
+            `${req.user.username} sent you a friend request`,
+            `/user/profile/${user_id}`
+        ]);
+    
+        res.status(200).json({message: "Friend request sent successfully"});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Failed to send friend request"});
+    }
+})
+
+app.get('/api/friend-request/unsend/:user_id', authenticateToken, async (req, res) => {
+    try {
+        const friend_id = req.params.user_id;
+        const user_id = req.user.user_id;
+    
+        // Unsend friend request
+        await runQuery("DELETE FROM friendships WHERE user_id = $1 AND friend_id = $2", [user_id, friend_id]);
+        await runQuery("DELETE FROM friendships WHERE user_id = $1 AND friend_id = $2", [friend_id, user_id]);
+
+        // Delete friend request notification
+        await runQuery("DELETE FROM notifications WHERE user_id = $1 AND type = 'friend_request' AND sender_id = $2", [friend_id, user_id]);
+
+        res.status(200).json({message: "Friend request unsend successfully"});
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Failed to unsend friend request"});
+    }
+})
+
+app.get('/api/friend-request/accept/:user_id', authenticateToken, async (req, res) => {
+    try {
+        const friend_id = req.params.user_id;
+        const user_id = req.user.user_id;
+    
+        // Accept friend request
+        await runQuery("UPDATE friendships SET status = 'accepted' WHERE user_id = $1 AND friend_id = $2", [user_id, friend_id]);
+        await runQuery("UPDATE friendships SET status = 'accepted' WHERE user_id = $1 AND friend_id = $2", [friend_id, user_id]);
+
+        // Delete friend request notification
+        await runQuery("DELETE FROM notifications WHERE user_id = $1 AND type = 'friend_request' AND sender_id = $2", [user_id, friend_id]);
+
+        res.status(200).json({message: "Friend request accepted successfully"});
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Failed to accept friend request"});
+    }
+})
+
+app.get('/api/friend-request/reject/:user_id', authenticateToken, async (req, res) => {
+    try {
+        const friend_id = req.params.user_id;
+        const user_id = req.user.user_id;
+    
+        // Reject friend request
+        await runQuery("UPDATE friendships SET status = 'rejected' WHERE user_id = $1 AND friend_id = $2", [user_id, friend_id]);
+        await runQuery("UPDATE friendships SET status = 'rejected' WHERE user_id = $1 AND friend_id = $2", [friend_id, user_id]);
+
+        // Delete friend request notification
+        await runQuery("DELETE FROM notifications WHERE user_id = $1 AND type = 'friend_request' AND sender_id = $2", [user_id, friend_id]);
+
+        res.status(200).json({message: "Friend request rejected successfully"});
+    }
+    catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Failed to reject friend request"});
+    }
+})
+
+app.get('/api/friendship/delete/:user_id', authenticateToken, async (req, res) => {
+    try{
+        const friend_id = req.params.user_id;
+        const user_id = req.user.user_id;
+    
+        // Delete friendship
+        await runQuery("DELETE FROM friendships WHERE user_id = $1 AND friend_id = $2", [user_id, friend_id]);
+        await runQuery("DELETE FROM friendships WHERE user_id = $1 AND friend_id = $2", [friend_id, user_id]);
+
+        res.status(200).json({message: "Friendship deleted successfully"});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Failed to delete friendship"});
+    }
 })
 
 app.listen(port, () => {
