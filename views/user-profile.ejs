@@ -2,6 +2,10 @@
 <%- include('./components/post')  %>
 <%- include('./partials/navBar') %>
 
+<!-- Croppie.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/croppie/2.6.5/croppie.css">
+
 <style>
     body {
         font-family: 'Calibri', sans-serif;
@@ -35,7 +39,7 @@
         }
 
         .background-user {
-            align-items: end;
+            /* align-items: end; */
             margin-bottom: 5px;
         }
         .background-user .profile-image {
@@ -62,7 +66,7 @@ class="
     md:max-w-[800px] md:w-full md:mx-auto md:items-center md:justify-center
 ">
     <div class="user-background w-full rounded-b-lg relative border">
-        <img style="object-fit: cover;" class="background-image w-full h-auto rounded-b-lg" src="https://static.vecteezy.com/system/resources/thumbnails/024/669/489/small_2x/mountain-countryside-landscape-at-sunset-dramatic-sky-over-a-distant-valley-green-fields-and-trees-on-hill-beautiful-natural-landscapes-of-the-carpathians-generative-ai-variation-5-photo.jpeg" alt="">
+        <img id="cover_preview" style="object-fit: cover;" class="background-image w-full h-auto max-h-[400px] rounded-b-lg" src="<%= typeof profile_user.profile_cover === 'string' ? profile_user.profile_cover : "https://images.pexels.com/photos/281260/pexels-photo-281260.jpeg?cs=srgb&dl=pexels-francesco-ungaro-281260.jpg&fm=jpg" %>" alt="">
         <div class="absolute top-0 left-0 w-full h-full bg-black/[0.2] flex flex-col justify-end">
             <div class="background-header w-full flex items-end justify-between px-2 relative border-b-2">
                 <div class="background-user flex gap-5 items-center">
@@ -70,14 +74,15 @@ class="
                     <p class="user-name text-white font-bold text-2xl items-center translate-y-[25px]"><%= profile_user.username %> <%= profile_user.user_id === user.user_id ? '(You)' : '' %></p>
                 </div>
                 <% if (profile_user.user_id === user.user_id) { %>
-                    <button type="button" class="border-black border-2 px-3 py-2 rounded-lg bg-black bg-opacity-50 text-white mb-1 hover:bg-black hover:bg-opacity-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-camera inline">
+                    <label id="edit_cover_btn" for="edit_cover_input" class="border-black border-2 px-3 py-2 rounded-lg bg-black bg-opacity-50 text-white mb-1 hover:bg-black hover:bg-opacity-100">
+                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-camera inline">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                             <path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
                             <path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" />
                         </svg>
                         Edit Cover
-                    </button>
+                    </label>
+                    <input type="file" accept="image/jpeg, image/png" name="edit_cover_input" id="edit_cover_input" class="hidden">
                 <% } else { %>
                     <!-- <button type="button" 
                     class="
@@ -200,13 +205,12 @@ class="
                         </svg>
                         Friends
                     </button>
-                    <button data-data-loaded="false" data-profile-section="photos_section" type="button" class="profile-section-toggle h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4">
-                        <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-photo me-2">
+                    <button disabled data-data-loaded="false" data-profile-section="photos_section" type="button" class="profile-section-toggle h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4 cursor-not-allowed">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-triangle me-2">
                             <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                            <path d="M15 8h.01" />
-                            <path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" />
-                            <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" />
-                            <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" />
+                            <path d="M12 9v4" />
+                            <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                            <path d="M12 16h.01" />
                         </svg>
                         Photos
                     </button>
@@ -244,13 +248,12 @@ class="
             </svg>
             Friends
         </button>
-        <button data-data-loaded="false" data-profile-section="photos_section" type="button" class="profile-section-toggle h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4">
-            <svg style="pointer-events: none;" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-photo me-2">
+        <button disabled data-data-loaded="false" data-profile-section="photos_section" type="button" class="profile-section-toggle h-full p-3 font-bold flex items-center text-slate-400 border-sky-400 hover:text-black hover:border-b-4 cursor-not-allowed">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-alert-triangle me-2">
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M15 8h.01" />
-                <path d="M3 6a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3v12a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3v-12z" />
-                <path d="M3 16l5 -5c.928 -.893 2.072 -.893 3 0l5 5" />
-                <path d="M14 14l1 -1c.928 -.893 2.072 -.893 3 0l3 3" />
+                <path d="M12 9v4" />
+                <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0z" />
+                <path d="M12 16h.01" />
             </svg>
             Photos
         </button>
@@ -377,8 +380,8 @@ class="
                 </div>
             </div>
         </div>
-        <div id="friends_section" class="w-full mt-4 gap-8 flex flex-col hidden">
-    
+        <div id="friends_section" class="w-full mt-4 flex flex-col hidden relative border rounded-lg">
+            <h5 class="font-bold text-2xl p-3 border-b">Friends</h5>
         </div>
         <div id="photos_section" class="w-full mt-4 gap-8 flex flex-col hidden">
     
@@ -395,6 +398,76 @@ class="
         if(postList && postData.length > 0) {
             postData.forEach(post => createPostElement(post, 'posts_section'));
         }
+    })
+
+    const edit_cover_input = document.getElementById('edit_cover_input');
+    edit_cover_input && edit_cover_input.addEventListener('input', () => {
+
+        const maxSizeInBytes = 2 * 1024 * 1024;
+        if(edit_cover_input.files && edit_cover_input.files[0].size > maxSizeInBytes) {
+            showToast('error', 'Error', 'Cover image size must be less than 2MB.');
+            return;
+        }
+
+        confDialog(
+            'Crop your cover', 
+            `<div class="w-full flex justify-center">
+                <div id="avatar_croppie"></div>
+            </div>`, 
+            'Confirm', 
+            async () => {
+                const coverPreview = document.querySelector('#cover_preview');
+                const resultCover = await coverCroppie.result('base64', 'viewport', 'png', true);
+                fetch('/api/profile-cover-image/store', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        cover_base64: resultCover
+                    })
+                })
+                .then(res => {
+                    if(res.ok) {
+                        return res.json();
+                    }
+                    showToast('error', 'Error', 'Something went wrong.');
+                    confDialog();
+                    throw new Error('Failed to save cover image');
+                })
+                .then(data => {
+                    coverPreview.src = resultCover;
+                    coverCroppie.destroy();
+                    showToast('success', 'Success', 'Your cover image has been updated.');
+                    confDialog();
+                })
+                .catch(error => {
+                    console.error(error);
+                    showToast('error', 'Error', 'Something went wrong.');
+                    confDialog();
+                })
+
+            }
+        );
+
+        // Croppie.js initialization
+        const coverCroppieContainer = document.querySelector('#avatar_croppie');
+        const coverCroppie = new Croppie(coverCroppieContainer, {
+            enableOrientation: true,
+            viewport: {
+                width: 400,
+                height: 200,
+                type: 'square'
+            },
+            boundary: {
+                width: 500,
+                height: 500
+            }
+        });
+
+        coverCroppie.bind({
+            url: URL.createObjectURL(edit_cover_input.files[0])
+        });
     })
 
     const section_buttons_container = document.querySelectorAll('.section-buttons-container');
@@ -425,6 +498,53 @@ class="
             const isDataLoaded = clickedButton.getAttribute('data-data-loaded');
             if(isDataLoaded == 'false') {
                 switch(selectedSectionId) {
+                    case 'friends_section':
+                        const loader = getLoaderElement({
+                            position: 'relative',
+                            marginTop: 'mt-[100px]',
+                            marginBottom: 'mb-[100px]'
+                        });
+                        selectedSection.appendChild(loader);
+
+                        setTimeout(() => {
+                            fetch(`/api/friends/${profileUser.user_id}`)
+                            .then(res => {
+                                if(!res.ok) {
+                                    throw new Error('Failed to get friends');
+                                }
+                                return res.json();
+                            })
+                            .then(data => {
+                                selectedSection.removeChild(loader);
+
+                                if(data.friends.length == 0) {
+                                    const no_friends_message = document.createElement('div');
+                                    no_friends_message.className = 'w-full h-full flex flex-col justify-center items-center p-5';
+                                    no_friends_message.innerHTML = `
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-user-exclamation inline">
+                                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                            <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                            <path d="M6 21v-2a4 4 0 0 1 4 -4h4c.348 0 .686 .045 1.008 .128" />
+                                            <path d="M19 16v3" />
+                                            <path d="M19 22v.01" />
+                                        </svg>
+                                        <h1 class="font-bold text-2xl">No friends</h1>
+                                    `;
+                                    selectedSection.appendChild(no_friends_message);
+                                } else {
+                                    data.friends.forEach(friend => {
+                                        const friendElement = createFriendElement(friend);
+                                        selectedSection.appendChild(friendElement);
+                                    })
+                                }
+
+                                clickedButton.setAttribute('data-data-loaded', 'true');
+                            })
+                            .catch(err => {
+                                console.error(err);
+                            })
+                        }, 500);
+                        break;
                     default:
                         break;
                 }
@@ -474,6 +594,7 @@ class="
                 })
                 .catch(err => {
                     console.log(err);
+                    showToast('error', 'Error', 'Something went wrong.');
                     confDialog();
                 })
             }
@@ -493,6 +614,7 @@ class="
             friendRequestNotification && deleteNotifitcationElement(friendRequestNotification.notification_id)
         } catch(err) {
             console.log(err);
+            showToast('error', 'Error', 'Something went wrong.');
         }
     })
 
@@ -509,6 +631,7 @@ class="
             friendRequestNotification && deleteNotifitcationElement(friendRequestNotification.notification_id)
         } catch(err) {
             console.log(err);
+            showToast('error', 'Error', 'Something went wrong.');
         }
     })
 
@@ -527,11 +650,29 @@ class="
                     confDialog();
                 } catch(err) {
                     console.log(err);
+                    showToast('error', 'Error', 'Something went wrong.');
                     confDialog();
                 }
             }
         )
     })
+
+    function createFriendElement(friend) {
+        const friendElement = document.createElement('div');
+        friendElement.className = 'flex items-center p-5 hover:bg-gray-100 cursor-pointer w-full border-b';
+        friendElement.innerHTML = `
+        <a href="/user/profile/${friend.user_id}" class="flex gap-3">
+            <div class="w-[50px] h-[50px] rounded-full overflow-hidden">
+                <img src="${friend.avatar}" alt="">
+            </div>
+            <div class="flex flex-col">
+                <h1 class="font-bold hover:underline">${friend.username}</h1>
+                <h1 class="text-gray-500">${friend.first_name} ${friend.last_name}</h1>
+            </div>
+        </a>
+        `;
+        return friendElement;
+    }
 </script>
 
 <%- include('./partials/footer') %>

@@ -12,7 +12,8 @@ html {
     flex-direction: column;
     align-items: center;
     background-color: white;
-    width: 500px;
+    width: 95%;
+    max-width: 500px;
     border-radius: 8px;
     padding:15px;
     margin: 50px auto 50px auto;
@@ -46,7 +47,7 @@ html {
     outline: none;
     border: none;
     border-bottom: solid 3px gray;
-    text-indent: 40px;
+    padding-left: 30px;
   }
   
   .InputFields .InputFieldBottomLine {

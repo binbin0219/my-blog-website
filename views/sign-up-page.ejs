@@ -13,14 +13,14 @@
 </style>
 
     <div class="sign-up">
-        <h1>Sign up</h1>
+        <h1 class="font-bold text-4xl">Sign up</h1>
         <form class="sign-up-form" action="/signing-up" method="post">
             <div class="w-full flex justify-between">
                 <div class="flex flex-col w-[45%]">
                     <label for="firstName">First Name</label>
                     <div class="InputFields">
                         <span class="material-symbols-outlined icon">first_page</span>
-                        <input name="firstName" required>
+                        <input id="first_name_input" maxlength="20" name="firstName" required>
                         <div class="InputFieldBottomLine"></div>
                     </div>
                 </div>
@@ -28,7 +28,7 @@
                     <label for="lastName">Last Name</label>
                     <div class="InputFields">
                         <span class="material-symbols-outlined icon">last_page</span>
-                        <input name="lastName" required>
+                        <input id="last_name_input" maxlength="20" name="lastName" required>
                         <div class="InputFieldBottomLine"></div>
                     </div>
                 </div>
@@ -96,7 +96,7 @@
 
         <div class="alreadyHaveAnAccount">
             <p>Already have an account?</p>
-            <a href="https://my-blog-website-rml4.onrender.com/login">Go to login >></a>
+            <a href="/login">Go to login >></a>
         </div>
 
     </div>
@@ -194,6 +194,8 @@
         async function signupVerifier() {
             document.querySelector(".sign-up-form").addEventListener('submit', async (event) => {
                 event.preventDefault();
+                if(document.getElementById('first_name_input').value === '') return;
+                if(document.getElementById('last_name_input').value === '') return;
 
                 // Check username
 

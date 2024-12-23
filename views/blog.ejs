@@ -110,6 +110,7 @@
         let relatedUsers = <%- JSON.stringify(relatedUsers) %>;
 
         document.addEventListener('DOMContentLoaded', () => {
+            console.log(postData);
             postData.forEach(post => createPostElement(post, 'post_list'))
         })
     </script>

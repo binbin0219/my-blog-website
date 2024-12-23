@@ -20,6 +20,10 @@ function isUserAuthorized(req, res, next) {
                 const notifications = await getNotifications(user[0].user_id);
                 user[0].notifications = notifications;
 
+                // Get friends
+                const friends = await runQuery("SELECT friend_id FROM friendships WHERE (user_id = $1 AND status = 'accepted')", [user[0].user_id]);
+                user[0].friends_id = friends.map(friend => friend.friend_id);
+
                 // Get user data and its avatar
                 const filePath = path.join(userAvatarDirPath, `user_avatar_${user[0].user_id}.${userAvatarFormat}`);
                 if(fs.existsSync(filePath)) {

@@ -32,8 +32,8 @@ const createTableQueries = [
   `CREATE TABLE IF NOT EXISTS "public"."posts" (
     "user_id" INTEGER,
     "post_id" SERIAL PRIMARY KEY,
-    "title" VARCHAR(100),
-    "content" VARCHAR(500),
+    "title" TEXT,
+    "content" TEXT,
     "date" VARCHAR(50),
     "username" VARCHAR(100),
     "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -45,7 +45,7 @@ const createTableQueries = [
     "post_id" INTEGER,
     "user_id" INTEGER,
     "username" VARCHAR(200),
-    "content" VARCHAR(500),
+    "content" TEXT,
     "create_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY ("post_id") REFERENCES "posts" ("post_id") ON DELETE CASCADE,
     FOREIGN KEY ("user_id") REFERENCES "users" ("user_id") ON DELETE CASCADE

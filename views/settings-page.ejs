@@ -53,7 +53,7 @@ class="
             <li>
                 <button type="button" 
                 class="
-                    text-left rounded-lg hover:bg-slate-100 font-medium p-3
+                    text-left rounded-lg hover:bg-slate-100 font-medium p-3 cursor-not-allowed
                     md:w-[200px] 
                     w-full
                 ">
@@ -63,7 +63,7 @@ class="
             <li>
                 <button type="button" 
                 class="
-                    text-left rounded-lg hover:bg-slate-100 font-medium p-3
+                    text-left rounded-lg hover:bg-slate-100 font-medium p-3 cursor-not-allowed
                     md:w-[200px] 
                     w-full
                 ">
@@ -309,7 +309,13 @@ class="
     // image upload input
     const uploadImgInput = document.querySelector('#upload_img_input');
     uploadImgInput && uploadImgInput.addEventListener('input', () => {
-        // avatarPreview.src = URL.createObjectURL(uploadImgInput.files[0]);
+
+        const maxSizeInBytes = 2 * 1024 * 1024;
+        if(uploadImgInput.files && uploadImgInput.files[0].size > maxSizeInBytes) {
+            showToast('error', 'Error', 'Image size must be less than 2MB.');
+            return;
+        }
+
         confDialog(
             'Crop your avatar', 
             `<div class="w-full flex justify-center">
@@ -371,6 +377,7 @@ class="
         })
         .catch(err => {
             console.log(err);
+            showToast('error', 'Error', 'Something went wrong.');
 
             // Re-enable button
             randomAvatarBtn.classList.remove('button-disabled');
@@ -446,11 +453,12 @@ class="
             setTimeout(() => {
                 // Re-enable button
                 saveChangesBtn.classList.remove('button-disabled');
+                showToast('success', 'Success', 'Your profile has been updated.');
             }, 500);
         })
         .catch(err => {
             console.log(err);
-
+            showToast('error', 'Error', 'Something went wrong.');
             // Re-enable button
             saveChangesBtn.classList.remove('button-disabled');
         })

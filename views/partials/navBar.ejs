@@ -15,6 +15,10 @@
 <div class="bar">
     <div class="max-w-[1400px] w-full mx-auto flex items-center justify-between">
         <a href="/" class="ms-7 text-[35px] me-[20px] text-indigo-600 cursor-pointer hover:text-indigo-500" style="font-family: fugaz one;">Blogify</a>
+        <div class="w-[300px] relative">
+            <div id="searchbox" class="w-[100%]"></div>
+            <div id="hits" class="w-full absolute bg-white rounded-lg shadow-md hidden" style=""></div>
+        </div>
         <div class="flex gap-3 items-center me-2">
             <button id="logout_btn" type="button" class="flex gap-1 items-center rounded-full px-3 py-2 border-2 border-slate-300 bg-slate-100 text-sm text-slate-600 hidden">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-logout">
@@ -84,6 +88,15 @@
                             </svg>
                             Settings
                         </li>
+                        <li onclick="logoutConf()" class="dropdown-item flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-logout">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2" />
+                                <path d="M9 12h12l-3 -3" />
+                                <path d="M18 15l3 -3" />
+                            </svg>
+                            Logout
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -137,6 +150,89 @@
         }
     })
 
+    // Algolia 
+    const searchClient = new algoliasearch.algoliasearch('EMUUEQI5C4', '9a126b2edc86ed732f40e5d412a0d7d0');
+    const search = instantsearch({
+        indexName: 'users_index',
+        searchClient,
+        searchFunction(helper) {
+            const query = helper.state.query;
+            const hitsContainer = document.querySelector('#hits');
+
+            if (!query) {
+                // Hide results if the query is empty
+                hitsContainer.classList.add('hidden');
+                return;
+            }
+
+            // Show results if there is a query
+            hitsContainer.classList.remove('hidden');
+            helper.search();
+        },
+    });
+
+    // Add widgets: search box and hits
+    search.addWidgets([
+        instantsearch.widgets.searchBox({
+            container: '#searchbox',
+            placeholder: 'Search for users...',
+            showLoadingIndicator: true,
+            cssClasses: {
+                input: 'outline-none',
+            },
+        }),
+        instantsearch.widgets.hits({
+            container: '#hits',
+            cssClasses: {
+                list: 'flex flex-col gap-2 p-2 m-0',
+                item: 'w-full m-0 p-0 border-none rounded-lg hover:bg-slate-50',
+                root: 'relative'
+            },
+            templates: {
+                item(hit, {html}) {
+                    return html`
+                        <a class="flex gap-2 p-3 items-center justify-between cursor-pointer hover:bg-slate-50" href="/user/profile/${hit.user_id}">
+                            <div class="flex gap-2 items-center">
+                                <img src="/api/user-profile/avatar/${hit.user_id}" alt="" class="w-[45px] h-[45px] rounded-full"/>
+                                <p>${hit.username}</p>
+                            </div>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" 
+                                    class="icon icon-tabler icons-tabler-outline icon-tabler-user-check stroke-green-500 ${userData.friends_id.includes(hit.user_id) ? '' : 'hidden'}">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+                                <path d="M6 21v-2a4 4 0 0 1 4 -4h4" />
+                                <path d="M15 19l2 2l4 -4" />
+                            </svg>
+                        </a>
+                    `
+                },
+            },
+            transformItems(items) {
+                console.log(items);
+                // Filter, sort, or modify results here
+                return items.filter((item) => item.username !== userData.username); // Example: Only show items with price < 100
+            },
+        }),
+    ]);
+
+    // Start the search
+    search.start();
+
+    const searchBox = document.querySelector('.ais-SearchBox-input');
+    const hitsContainer = document.querySelector('#hits');
+
+    // Show results when user focuses on the input
+    searchBox.addEventListener('focus', () => {
+        hitsContainer.classList.remove('hidden');
+    });
+
+    // Optionally, hide results when the user clicks outside
+    document.addEventListener('click', (event) => {
+        if (!searchBox.contains(event.target) && !hitsContainer.contains(event.target)) {
+            hitsContainer.classList.add('hidden');
+        }
+    });
+
     // Notifications button
     const notificationBtn = document.getElementById('notifications_btn');
     notifications_btn.addEventListener('click', () => {
@@ -147,7 +243,7 @@
 
     function createNotificationElement(notification) {
         const notificationElement = document.createElement('button');
-        notificationElement.onclick = () => {windoww.location.href = `/user/profile/${notification.sender_id}`};
+        notificationElement.onclick = () => {window.location.href = `/user/profile/${notification.sender_id}`};
         notificationElement.id = `notification_${notification.notification_id}`;
         notificationElement.className = "notification dropdown-item flex gap-2 items-center";
         notificationElement.style.minWidth = "250px";
@@ -284,6 +380,17 @@
                 notification_count.textContent = remainingNotificationElements.length - 1;
             }
         }
+    }
+
+    function logoutConf() {
+        confDialog(
+            'Logout', 
+            'Are you sure you want to logout?', 
+            'Logout', 
+            () => {
+                window.location.href = '/logout';
+            }
+        )
     }
 
 </script>

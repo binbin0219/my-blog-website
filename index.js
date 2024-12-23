@@ -8,8 +8,10 @@ import fs from "fs"
 import path from "path"
 import sharp from "sharp"
 import { authenticateToken, isUserAuthorized } from "./middleware/auth.js"
-import { __dirname, userAvatarDirPath, userAvatarFormat } from "./config.js"
+import { __dirname, userAvatarDirPath, userAvatarFormat, userProfileCoverImgDirPath, userProfileCoverImgFormat } from "./config.js"
 import { getNotifications } from "./notification.js"
+import { saveUser } from "./algoliasearch.js"
+import { getUserAvatar, getUserData, getUserProfileCover } from "./user.js"
 
 // Connect to the database
 const db = await databaseSetup();
@@ -78,20 +80,15 @@ app.get('/settings', isUserAuthorized, async (req, res) => {
 })
 
 app.get('/user/profile/:user_id', isUserAuthorized, async (req, res) => {
+    if(!req.params.user_id || !req.params.user_id.match(/^[0-9]+$/)) return res.status(404).json({message: "User not found"});
     res.locals.routeName = "user.profile";
     const relatedUsersId = [];
     const relatedUsers = [];
     const foundUser = await runQuery("SELECT * FROM users WHERE user_id = $1", [req.params.user_id]);
     foundUser[0].password = undefined;
     foundUser[0].accountName = undefined;
-
-    // Get user avatar
-    const filePath = path.join(userAvatarDirPath, `user_avatar_${foundUser[0].user_id}.${userAvatarFormat}`);
-    if(!fs.existsSync(filePath)) return;
-    const avatarBuffer = fs.readFileSync(filePath);
-    const base64avatar = Buffer.from(avatarBuffer).toString('base64');
-    const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
-    foundUser[0].avatar = avatar;
+    foundUser[0].avatar = getUserAvatar(req.params.user_id);
+    foundUser[0].profile_cover = getUserProfileCover(req.params.user_id);
 
     // Identify if is friend with current user
     const friendship = await runQuery(
@@ -237,8 +234,6 @@ app.post("/signing-up", async (req, res) => {
         .toFormat(`${userAvatarFormat}`)
         .toFile(userAvatarDirPath + `/user_avatar_${nextUserId}.${userAvatarFormat}`);
 
-        console.log(req.body)
-
         // Insert the new user
         const queryString = 'INSERT INTO users VALUES '
         const insertedRow = await runQuery("INSERT INTO users VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *", [
@@ -250,6 +245,13 @@ app.post("/signing-up", async (req, res) => {
             req.body.lastName.trim(),
             hashedPassword
         ])
+
+        // Add user to agolia
+        saveUser({
+            objectID: insertedRow[0].user_id,
+            user_id: insertedRow[0].user_id,
+            username: insertedRow[0].username,
+        })
 
         // Generate a JWT
         const maxAge = 3 * 60 * 60;
@@ -272,6 +274,12 @@ app.post("/signing-up", async (req, res) => {
         res.redirect('/sign-up');
     }
 
+})
+
+// Logout
+app.get("/logout", (req, res) => {
+    res.cookie("jwt", "", {maxAge: 1});
+    res.redirect("/");
 })
 
 app.post("/verify-account-name", async (req, res) => {
@@ -332,7 +340,7 @@ app.post('/create-post', async (req,res)=> {
         req.body.userId,
         result[0] ? result[0].post_id + 1 : 1,
         req.body.title,
-        req.body.content,
+        req.body.content.replace(/\r\n/g, '\n'),
         currentDateTime,
         username[0].username
     ]);
@@ -409,7 +417,7 @@ app.post('/create-comment', async (req,res)=> {
         req.body.postId,
         req.body.userId,
         req.body.username,
-        req.body.content
+        req.body.content.replace(/\r\n/g, '\n')
     ])
     .then(()=> res.status(201).json({message: "comment created successfully"}))
     .catch( error => {
@@ -477,6 +485,13 @@ app.post('/api/user-profile/update', authenticateToken, async (req, res) => {
         await sharp(avatarBuffer)
             .toFormat(`${userAvatarFormat}`)
             .toFile(avatarPath);
+
+        // Add user to agolia
+        await saveUser({
+            objectID: userId,
+            user_id: userId,
+            username: req.body.username,
+        });
     
         // Update user
         await runQuery(queryString, queryValues);
@@ -487,6 +502,40 @@ app.post('/api/user-profile/update', authenticateToken, async (req, res) => {
         res.status(500).json({ message: 'Failed to update profile' });
     }
     
+})
+
+// Save user profile cover image
+app.post('/api/profile-cover-image/store', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.user_id;
+        const coverBase64 = req.body.cover_base64.split(',')[1];
+        const coverBuffer = Buffer.from(coverBase64, 'base64');
+        const coverPath = path.join(userProfileCoverImgDirPath, `user_cover_${userId}.${userProfileCoverImgFormat}`);
+
+        // Ensure the directory exists
+        if (!fs.existsSync(userProfileCoverImgDirPath)) {
+            fs.mkdirSync(userProfileCoverImgDirPath, { recursive: true });
+        }
+
+        await sharp(coverBuffer)
+            .toFormat(`${userProfileCoverImgFormat}`)
+            .toFile(coverPath);
+        res.json({ message: 'Cover updated successfully' });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to update cover' });
+    }
+})
+
+app.get('/api/user-profile/avatar/:user_id', async (req, res) => {
+    const filePath = path.join(userAvatarDirPath, `user_avatar_${req.params.user_id}.${userAvatarFormat}`);
+    if(!fs.existsSync(filePath)) return res.status(404).json({message: "Avatar not found"});
+    // Set the correct content type for the image
+    res.setHeader('Content-Type', `image/${userAvatarFormat}`);
+    
+    // Stream the image file directly to the response
+    fs.createReadStream(filePath).pipe(res);
 })
 
 app.get('/api/notifications/:user_id', authenticateToken, async (req, res) => {
@@ -629,6 +678,25 @@ app.get('/api/friendship/delete/:user_id', authenticateToken, async (req, res) =
     } catch (error) {
         console.log(error);
         res.status(500).json({message: "Failed to delete friendship"});
+    }
+})
+
+app.get('/api/friends/:user_id', authenticateToken, async (req, res) => {
+    try {
+        const user_id = req.params.user_id;
+        const friends = await runQuery("SELECT friend_id FROM friendships WHERE user_id = $1 AND status = 'accepted'", [user_id]);
+        const friends_ids = friends.map(friend => friend.friend_id);
+
+        let friendsData = [];
+        for(const friend_id of friends_ids) {
+            const result = await getUserData(friend_id);
+            friendsData.push(result);
+        }
+
+        res.status(200).json({friends: friendsData});
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({message: "Failed to get friends"});
     }
 })
 

@@ -115,7 +115,7 @@
                     ${post.title}
                 </h1>
                 <p class="post-content" style="word-wrap: break-word;">
-                    ${post.content}
+                    ${post.content.replaceAll('\n', '<br>')}
                 </p>
             </div>
             <div class="mt-3 border-t-2 border-gray-200">
@@ -331,7 +331,7 @@
                     <p class="comment-user-name font-bold">${commentUser.username} ${isCurrentUser ? '(You)' : ''}</p>
                     <p class="comment-time text-xs">${timeAgo(comment.create_at)}</p>
                 </div>
-                <p class="comment-content text-sm max-w-[]" style="word-wrap: break-word;">${comment.content}</p>
+                <p class="comment-content text-sm max-w-[]" style="word-wrap: break-word;">${comment.content.replaceAll('\n', '<br>')}</p>
             </div>
         `
         return commentElement;
@@ -341,7 +341,6 @@
         const title = postDiv.querySelector(".post-title");
         const content = postDiv.querySelector(".post-content");
         const isPostEditing = postDiv.getAttribute("data-post-editing");
-        // const postId = postDiv.querySelector(".postId").innerHTML;
 
         switch (isPostEditing) {
             case "true":
