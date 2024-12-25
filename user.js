@@ -3,6 +3,7 @@ import { runQuery } from "./databaseSetup.js";
 import fs from "fs";
 import path from "path";
 import { generateRandomAvatar } from "./index.js";
+import sharp from "sharp";
 
 async function getUserData(userId) {
     const result = await runQuery("SELECT * FROM users WHERE user_id = $1", [userId]);
@@ -15,7 +16,21 @@ async function getUserData(userId) {
 async function getUserAvatar(userId) {
     // Get user avatar
     const filePath = path.join(userAvatarDirPath, `user_avatar_${userId}.${userAvatarFormat}`);
-    const avatarBuffer = fs.existsSync(filePath) ? fs.readFileSync(filePath) : await generateRandomAvatar();
+    if(!fs.existsSync(filePath)) {
+        // Generate a random avatar and save it
+        const randomAvatar = await generateRandomAvatar('male');
+        sharp(Buffer.from(randomAvatar))
+        .toFormat(`${userAvatarFormat}`)
+        .toFile(userAvatarDirPath + `/user_avatar_${userId}.${userAvatarFormat}`);
+
+        const avatarBuffer = await sharp(Buffer.from(randomAvatar))
+        .toFormat(`${userAvatarFormat}`)
+        .toBuffer();
+        const base64avatar = avatarBuffer.toString('base64');
+        const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
+        return avatar;
+    }
+    const avatarBuffer = fs.readFileSync(filePath);
     const base64avatar = Buffer.from(avatarBuffer).toString('base64');
     const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
     return avatar;

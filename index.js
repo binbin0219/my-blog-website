@@ -455,7 +455,6 @@ app.get('/api/random-avatar/:gender', async (req, res) => {
     const avatar = await generateRandomAvatar(gender);
 
     const avatarBuffer = await sharp(Buffer.from(avatar))
-    // .png({ quality: 90, compressionLevel: 9, force: true })  // force PNG format and set transparency
     .toFormat(`${userAvatarFormat}`)
     .toBuffer();
 
