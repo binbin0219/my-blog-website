@@ -17,6 +17,8 @@ async function getUserAvatar(userId) {
     // Get user avatar
     const filePath = path.join(userAvatarDirPath, `user_avatar_${userId}.${userAvatarFormat}`);
     if(!fs.existsSync(filePath)) {
+        fs.mkdirSync(userAvatarDirPath, { recursive: true });
+        
         // Generate a random avatar and save it
         const randomAvatar = await generateRandomAvatar('male');
         sharp(Buffer.from(randomAvatar))
@@ -43,6 +45,10 @@ function getUserProfileCover(userId) {
     const base64cover = Buffer.from(coverBuffer).toString('base64');
     const cover = `data:image/${userProfileCoverImgFormat};base64,${base64cover}`
     return cover;
+}
+
+function createRandomUserAvatar(userId) {
+
 }
 
 export { getUserData, getUserAvatar, getUserProfileCover };
