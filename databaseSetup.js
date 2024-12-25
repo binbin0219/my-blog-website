@@ -1,29 +1,19 @@
 import pg from "pg"
 import { clearAllRecords, saveUser } from "./algoliasearch.js";
 import fs from "fs";
-import { AlgoliaUserIndexName, isUsingRenderHostDatabase, userAvatarDirPath, userAvatarFormat } from "./config.js";
+import { AlgoliaUserIndexName, userAvatarDirPath, userAvatarFormat } from "./config.js";
 import { generateRandomAvatar } from "./index.js";
 import sharp from "sharp";
 import 'dotenv/config'
 
 // PostgreSQL connection setup
-let db;
-if(isUsingRenderHostDatabase) {
-    db = new pg.Pool({
-      connectionString: 'postgresql://jiungbin0219:dg6y5Aeu7cY8GRCmoQEJpk34WrBjQApU@dpg-ctka85dumphs73ffh6p0-a.singapore-postgres.render.com/blogify_re9j',
-      ssl: {
-          rejectUnauthorized: false // For self-signed certificates (optional)
-      }
-  });
-} else {
-  db = new pg.Pool({
+const db = new pg.Pool({
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME
   });
-}
 
 const createTableQueries = [
   `CREATE TABLE IF NOT EXISTS "public"."users" (

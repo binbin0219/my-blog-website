@@ -2,11 +2,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
 
-// Change this to false if you want to use local database
-const isUsingRenderHostDatabase = true;
-
 // Algolia
-const AlgoliaUserIndexName = isUsingRenderHostDatabase ? 'render_users_index' : 'users_index';
+const AlgoliaUserIndexName = 'FYP_users_index';
 
 // Get __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +21,5 @@ export {
     userAvatarFormat,
     userProfileCoverImgDirPath,
     userProfileCoverImgFormat,
-    AlgoliaUserIndexName,
-    isUsingRenderHostDatabase
+    AlgoliaUserIndexName
 }
