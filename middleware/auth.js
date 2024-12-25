@@ -4,6 +4,7 @@ import { runQuery } from "../databaseSetup.js";
 import fs from "fs"
 import { AlgoliaUserIndexName, userAvatarDirPath, userAvatarFormat } from "../config.js";
 import { getNotifications } from "../notification.js";
+import { getUserAvatar } from "../user.js";
 
 const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
 function isUserAuthorized(req, res, next) {
@@ -28,13 +29,7 @@ function isUserAuthorized(req, res, next) {
                 user[0].friends_id = friends.map(friend => friend.friend_id);
 
                 // Get user data and its avatar
-                const filePath = path.join(userAvatarDirPath, `user_avatar_${user[0].user_id}.${userAvatarFormat}`);
-                if(fs.existsSync(filePath)) {
-                    const avatarBuffer = fs.readFileSync(filePath);
-                    const base64avatar = Buffer.from(avatarBuffer).toString('base64');
-                    const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`;
-                    user[0].avatar = avatar;
-                }
+                user[0].avatar = await getUserAvatar(user[0].user_id);
                 user[0].account_name = user[0].account_name.slice(-2);
                 user[0].password = null;
                 user[0].AlgoliaUserIndexName = AlgoliaUserIndexName;
