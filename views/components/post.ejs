@@ -108,7 +108,7 @@
                     <img onclick="window.location.href='/user/profile/${postUser.user_id}'" class="w-[45px] h-[45px] rounded-full" src="${postUser.avatar}" alt="">
                     <div class="flex flex-col">
                         <h4 onclick="window.location.href='/user/profile/${postUser.user_id}'" class="font-bold hover:underline">${postUser.username} ${isCurrentUser ? '(You)' : ''}</h4>
-                        <h6 class="text-sm hover:underline">${timeAgo(post.create_at)}</h6>
+                        <h6 class="text-sm hover:underline">${post.date} (${timeAgo(post.date)})</h6>
                     </div>
                 </div>
                 <h1 class="post-title font-bold mt-3" style="word-wrap: break-word;">
@@ -209,7 +209,7 @@
         // Remove no posts yet message if exist
         container.querySelector('#no_posts_yet') && container.querySelector('#no_posts_yet').remove();
 
-        postElement.addEventListener('click', (e) => {
+        postElement.addEventListener('click', async (e) => {
             const target = e.target;
             const postAction = target.getAttribute('data-post-action');
             switch(postAction) {
@@ -252,7 +252,7 @@
                     const commentInput = postElement.querySelector('.post-comment-input');
                     const content = commentInput.textContent;
                     if(!/[^\s]/.test(content)) return;
-                    createCommentInDatabase(post.post_id, commentInput.textContent);
+                    const insertedComment = await createCommentInDatabase(post.post_id, commentInput.textContent);
                     
                     // Remove no comment yet message if exist
                     const noCommentYet = postElement.querySelector('.no-comments-yet');
@@ -264,7 +264,7 @@
                         user_id: userData.user_id,
                         content: content
                     }
-                    const commentElement = createCommentElement(commentData);
+                    const commentElement = createCommentElement(insertedComment);
                     postElement.querySelector('.comment-list').appendChild(commentElement);
 
                     // Update total comment count
@@ -320,8 +320,8 @@
     }
 
     function createCommentElement(comment) {
-        const commentUser = relatedUsers.find(user => user.user_id == comment.user_id);
         const isCurrentUser = comment.user_id == userData.user_id;
+        const commentUser = isCurrentUser ? userData : relatedUsers.find(user => user.user_id == comment.user_id);
         const commentElement = document.createElement('div');
         commentElement.classList.add('w-full', 'flex', 'gap-2');
         commentElement.innerHTML = `
@@ -329,7 +329,7 @@
             <div class="p-2 bg-slate-100 rounded-lg flex flex-col gap-2 max-w-[85%]">
                 <div class="flex flex-col">
                     <p class="comment-user-name font-bold">${commentUser.username} ${isCurrentUser ? '(You)' : ''}</p>
-                    <p class="comment-time text-xs">${timeAgo(comment.create_at)}</p>
+                    <p class="comment-time text-xs">${timeAgo(comment.create_at.split(' ')[0])}</p>
                 </div>
                 <p class="comment-content text-sm max-w-[]" style="word-wrap: break-word;">${comment.content.replaceAll('\n', '<br>')}</p>
             </div>
@@ -457,8 +457,8 @@
         event.target.elements['content'].value = "";
     }
 
-    function createCommentInDatabase(postId, content) {
-        fetch('create-comment', {
+    async function createCommentInDatabase(postId, content) {
+        return fetch('create-comment', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -470,5 +470,19 @@
                 content: content
             })
         })
+        .then(response => {
+            if(response.ok) {
+                return response.json();
+            }
+            showToast('error', 'Error', 'Something went wrong.');
+            throw new Error('Failed to create comment');
+        })
+        .then(data => {
+            showToast('success', 'Success', 'Your comment has been posted.');
+            return data[0];
+        })
+        .catch(error => {
+            showToast('error', 'Error', 'Something went wrong.');
+        });
     }
 </script>

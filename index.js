@@ -3,7 +3,7 @@ import bodyParser from "body-parser"
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import cookieParser from "cookie-parser"
-import databaseSetup, { runQuery } from "./databaseSetup.js"
+import databaseSetup, { checkIfAllTablesExist, dropAllTables, insertSampleData, runQuery } from "./databaseSetup.js"
 import fs from "fs"
 import path from "path"
 import sharp from "sharp"
@@ -12,18 +12,6 @@ import { __dirname, userAvatarDirPath, userAvatarFormat, userProfileCoverImgDirP
 import { getNotifications } from "./notification.js"
 import { saveUser } from "./algoliasearch.js"
 import { getUserAvatar, getUserData, getUserProfileCover } from "./user.js"
-
-// Connect to the database
-const db = await databaseSetup();
-
-const app = express();
-app.use(express.json({ limit: '10mb' })); // Increase JSON payload size
-const port = process.env.PORT || 4000;
-const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
-let user = [];
-let posts = [];
-let likes = [];
-let comments = [];
 
 // Avataaars.io
 const maleOptions = {
@@ -44,7 +32,7 @@ const femaleOptions = {
     mouthType: ["Smile", "Twinkle", "Default"],
     skinColor: ["Light", "Brown", "DarkBrown"],
 };
-async function generateRandomAvatar(gender) {
+export async function generateRandomAvatar(gender) {
     const options = gender === "male" ? maleOptions : femaleOptions;
     const topType = options.topType[Math.floor(Math.random() * options.topType.length)];
     const facialHairType = options.facialHairType[Math.floor(Math.random() * options.facialHairType.length)];
@@ -56,6 +44,25 @@ async function generateRandomAvatar(gender) {
     const avatarSVG = await avatar.text();
     return avatarSVG;
 }
+
+// await dropAllTables();
+
+// Connect to the database
+const isAllTablesExist = await checkIfAllTablesExist();
+console.log(isAllTablesExist);
+if(isAllTablesExist === false) {
+    await databaseSetup();
+    insertSampleData();
+}
+
+const app = express();
+app.use(express.json({ limit: '10mb' })); // Increase JSON payload size
+const port = process.env.PORT || 4000;
+const jwtSecret = '1283fc47b7cd439a7f8e36e614a41fe519be35088befd42bc2fdf7130a646e9a75685b';
+let user = [];
+let posts = [];
+let likes = [];
+let comments = [];
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -246,6 +253,23 @@ app.post("/signing-up", async (req, res) => {
             hashedPassword
         ])
 
+        // Create friendship by first user which is me the developer of this project
+        if(nextUserId !== 1) {
+            const firstUser = await runQuery("SELECT * FROM users WHERE user_id = $1", [1]);
+            const friend_id = nextUserId;
+            await runQuery("INSERT INTO friendships (user_id, friend_id, sender_id, status) VALUES ($1, $2, $3, $4)", [firstUser[0].user_id, friend_id, firstUser[0].user_id, 'pending']);
+            await runQuery("INSERT INTO friendships (user_id, friend_id, sender_id, status) VALUES ($1, $2, $3, $4)", [friend_id, firstUser[0].user_id, firstUser[0].user_id, 'pending']);
+
+            // Create friend request notification
+            await runQuery("INSERT INTO notifications (user_id, sender_id, type, content, link) VALUES ($1, $2, $3, $4, $5)" , [
+                friend_id,
+                firstUser[0].user_id,
+                "friend_request",
+                `${firstUser[0].username} sent you a friend request`,
+                `/user/profile/${firstUser[0].user_id}`
+            ]);
+        }
+
         // Add user to agolia
         saveUser({
             objectID: insertedRow[0].user_id,
@@ -412,14 +436,14 @@ app.post('/create-comment', async (req,res)=> {
 
     const commentId = await runQuery("SELECT comment_id FROM comments ORDER BY comment_id DESC LIMIT 1");
 
-    runQuery("INSERT INTO comments VALUES ($1,$2,$3,$4,$5)",[
+    runQuery("INSERT INTO comments VALUES ($1,$2,$3,$4,$5) RETURNING *",[
         commentId[0] ? commentId[0].comment_id + 1 : 1,
         req.body.postId,
         req.body.userId,
         req.body.username,
         req.body.content.replace(/\r\n/g, '\n')
     ])
-    .then(()=> res.status(201).json({message: "comment created successfully"}))
+    .then((insertComment)=> res.status(201).json(insertComment))
     .catch( error => {
         console.log(error);
         res.status(500).json({message: "Failed to create comment"})

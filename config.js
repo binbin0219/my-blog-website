@@ -1,6 +1,12 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Change this to false if you want to use local database
+const isUsingRenderHostDatabase = true;
+
+// Algolia
+const AlgoliaUserIndexName = isUsingRenderHostDatabase ? 'render_users_index' : 'users_index';
+
 // Get __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,5 +22,7 @@ export {
     userAvatarDirPath,
     userAvatarFormat,
     userProfileCoverImgDirPath,
-    userProfileCoverImgFormat
+    userProfileCoverImgFormat,
+    AlgoliaUserIndexName,
+    isUsingRenderHostDatabase
 }

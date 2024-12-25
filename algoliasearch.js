@@ -1,5 +1,6 @@
 import { algoliasearch } from 'algoliasearch';
 import { runQuery } from './databaseSetup.js';
+import { AlgoliaUserIndexName } from './config.js';
 
 function algoliasearchInit() {
     const client = algoliasearch('EMUUEQI5C4', 'b2d7e6032e4077afa3e9dffb944fd000');
@@ -17,7 +18,18 @@ function algoliasearchInit() {
 
 function saveUser(user) {
     const client = algoliasearch('EMUUEQI5C4', 'b2d7e6032e4077afa3e9dffb944fd000');
-    return client.saveObjects({ indexName: 'users_index', objects: [user] });
+    return client.saveObjects({ indexName: AlgoliaUserIndexName, objects: [user] });
 }
 
-export { algoliasearchInit, saveUser }
+async function clearAllRecords(indexName) {
+    const client = algoliasearch('EMUUEQI5C4', 'b2d7e6032e4077afa3e9dffb944fd000');
+    // const index = client.initIndex(indexName);
+
+    return await client.clearObjects({indexName: indexName}).then(() => {
+        console.log(`All records cleared from the index: ${indexName}`);
+    }).catch(error => {
+        console.error(`Error clearing records from the index: ${indexName}`, error);
+    });
+}
+
+export { algoliasearchInit, saveUser, clearAllRecords }

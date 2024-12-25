@@ -1,17 +1,30 @@
 import pg from "pg"
+import { clearAllRecords, saveUser } from "./algoliasearch.js";
+import fs from "fs";
+import { AlgoliaUserIndexName, isUsingRenderHostDatabase, userAvatarDirPath, userAvatarFormat } from "./config.js";
+import { generateRandomAvatar } from "./index.js";
+import sharp from "sharp";
+import 'dotenv/config'
 
 // PostgreSQL connection setup
-const db = new pg.Pool({
-    // connectionString: "postgres://my_blog_website_user:WRAmhlA7uuwc7n71YIz3mz0imaPD65Cw@dpg-cobasda1hbls73app2og-a.singapore-postgres.render.com/my_blog_website",
-    // ssl: {
-    //     rejectUnauthorized: false // For self-signed certificates (optional)
-    // }
-    host: 'localhost',
-    port: 5433,
-    user: 'postgres',
-    password: 'binbin0219',
-    database: 'social_media_website',
-});
+let db;
+if(isUsingRenderHostDatabase) {
+    db = new pg.Pool({
+      connectionString: process.env.RENDER_DB_HOST,
+      ssl: {
+          rejectUnauthorized: false // For self-signed certificates (optional)
+      }
+  });
+} else {
+  db = new pg.Pool({
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME
+  });
+}
+
 const createTableQueries = [
   `CREATE TABLE IF NOT EXISTS "public"."users" (
     "user_id" SERIAL PRIMARY KEY,
@@ -118,6 +131,98 @@ export async function runQuery(queryText, values) {
     } finally {
         client.release(); // Release the client back to the pool
     }
+}
+
+export async function dropAllTables() {
+    return await runQuery("DROP TABLE IF EXISTS notifications, friendships, comments, likes, posts, users;");
+}
+
+export async function checkIfAllTablesExist() {
+  const tables = ['users', 'posts', 'likes', 'comments', 'notifications', 'friendships'];
+  const query = `
+      SELECT COUNT(*) AS table_count
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+        AND table_name = ANY($1::text[]);
+  `;
+  
+  const result = await runQuery(query, [tables]);
+  return result[0].table_count == tables.length;
+}
+
+
+export async function insertSampleData() {
+  try {
+    const client = await db.connect(); // Get a client from the pool
+    // Insert sample data into the tables
+    await client.query(`INSERT INTO users
+      (user_id, account_name, gender, username, first_name, last_name, password, occupation, relationship_status, country, region, phone_number)
+      VALUES
+      (1,'Tjiungbin0219', 'Male', 'Tjiungbin0219', 'Teo', 'Jiung Bin', 'randompassword', 'Web Developer', 'It''s Complicated', 'Malaysia', 'Johor', '{
+        "dialCode": "60",
+        "fullNumber": "+6010-795 7070",
+        "countryISO2": "my",
+        "countryName": "Malaysia",
+        "phoneNumberBody": "10-795 7070"
+      }'),
+      (2,'MeiLin1234', 'Female', 'MeiLin1234', 'Mei', 'Lin', 'randompassword', 'Teacher', 'Single', NULL, NULL, NULL)
+      ON CONFLICT (user_id) DO NOTHING
+    `);
+
+    // Avatar
+    // Ensure the directory exists
+    if (!fs.existsSync(userAvatarDirPath)) {
+      fs.mkdirSync(userAvatarDirPath, { recursive: true });
+    }
+    // Generate a random avatar and save it 1
+    const userAvatar1 = await generateRandomAvatar(('male'));
+    sharp(Buffer.from(userAvatar1))
+    // .png({ quality: 90, compressionLevel: 9, force: true })  // force PNG format and set transparency
+    .toFormat(`${userAvatarFormat}`)
+    .toFile(userAvatarDirPath + `/user_avatar_1.${userAvatarFormat}`);
+    // Generate a random avatar and save it 2
+    const userAvatar2 = await generateRandomAvatar(('female'));
+    sharp(Buffer.from(userAvatar2))
+    // .png({ quality: 90, compressionLevel: 9, force: true })  // force PNG format and set transparency
+    .toFormat(`${userAvatarFormat}`)
+    .toFile(userAvatarDirPath + `/user_avatar_2.${userAvatarFormat}`);
+
+    // Algolia
+    await clearAllRecords(AlgoliaUserIndexName);
+    saveUser({ objectID: 1, user_id: 1, username: 'Tjiungbin0219' });
+    saveUser({ objectID: 2, user_id: 2, username: 'MeiLin1234' });
+
+    await client.query(`INSERT INTO posts
+      (user_id, post_id, title, content, date, username)
+      VALUES
+      (1, 1, 'Welcome to Blogify! 😊', 'You can set up your profile details so that other users can know you better!\n
+      You can do it by hovering your profile picture in the navbar and go for the setting.', '2024-12-15 7:30', 'Tjiungbin0219'),
+      (2, 2, 'How long do dogs live on average?', 'Nearly 40% of small breed dogs live longer than 10 years, but only 13% of giant breed dogs live that long. The average 50-pound dog will live 10 to 12 years. But giant breeds such as great Danes or deerhounds are elderly at 6 to 8 years.', '2024-12-21 5:30', 'MeiLin1234')
+      ON CONFLICT (post_id) DO NOTHING
+    `);
+
+    await client.query(`INSERT INTO comments
+      (comment_id, post_id, user_id, username, content)
+      VALUES
+      (2, 1, 2, 'MeiLin1234', 'Hi!'),
+      (1, 1, 1, 'Tjiungbin0219', 'Hello!')
+      ON CONFLICT (comment_id) DO NOTHING
+    `);
+
+    await client.query(`INSERT INTO likes
+      (like_id, user_id, post_id)
+      VALUES
+      (1, 1, 1),
+      (2, 2, 1)
+      ON CONFLICT (like_id) DO NOTHING
+    `);
+
+    client.release(); // Release the client back to the pool
+    console.log('Sample data inserted.');
+  } catch (err) {
+    console.error('Error inserting sample data:', err);
+  }
+    
 }
 
 

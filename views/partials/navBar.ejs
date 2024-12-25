@@ -153,7 +153,7 @@
     // Algolia 
     const searchClient = new algoliasearch.algoliasearch('EMUUEQI5C4', '9a126b2edc86ed732f40e5d412a0d7d0');
     const search = instantsearch({
-        indexName: 'users_index',
+        indexName: userData.AlgoliaUserIndexName,
         searchClient,
         searchFunction(helper) {
             const query = helper.state.query;
@@ -208,7 +208,6 @@
                 },
             },
             transformItems(items) {
-                console.log(items);
                 // Filter, sort, or modify results here
                 return items.filter((item) => item.username !== userData.username); // Example: Only show items with price < 100
             },
@@ -243,7 +242,10 @@
 
     function createNotificationElement(notification) {
         const notificationElement = document.createElement('button');
-        notificationElement.onclick = () => {window.location.href = `/user/profile/${notification.sender_id}`};
+        notificationElement.onclick = (event) => {
+            if(event.target !== notificationElement) return;
+            window.location.href = `/user/profile/${notification.sender_id}`
+        };
         notificationElement.id = `notification_${notification.notification_id}`;
         notificationElement.className = "notification dropdown-item flex gap-2 items-center";
         notificationElement.style.minWidth = "250px";
@@ -311,7 +313,10 @@
                             const addFriendButton = document.getElementById('add_friend_button');
                             addFriendButton && addFriendButton.classList.remove('hidden');
                         }
+
+                        showToast('success', 'Success', 'Friend request rejected.');
                     } catch (error) {
+                        showToast('error', 'Error', 'Something went wrong.');
                         console.log(error);
                     }
                 })
@@ -327,7 +332,10 @@
                             const unfriendButton = document.getElementById('unfriend_button');
                             unfriendButton && unfriendButton.classList.remove('hidden');
                         }
+
+                        showToast('success', 'Success', 'Friend request accepted.');
                     } catch (error) {
+                        showToast('error', 'Error', 'Something went wrong.');
                         console.log(error);
                     }
                 })
