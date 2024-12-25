@@ -45,7 +45,7 @@ export async function generateRandomAvatar(gender) {
     return avatarSVG;
 }
 
-await dropAllTables();
+// await dropAllTables();
 
 // Connect to the database
 const isAllTablesExist = await checkIfAllTablesExist();
@@ -94,7 +94,7 @@ app.get('/user/profile/:user_id', isUserAuthorized, async (req, res) => {
     const foundUser = await runQuery("SELECT * FROM users WHERE user_id = $1", [req.params.user_id]);
     foundUser[0].password = undefined;
     foundUser[0].accountName = undefined;
-    foundUser[0].avatar = getUserAvatar(req.params.user_id);
+    foundUser[0].avatar = await getUserAvatar(req.params.user_id);
     foundUser[0].profile_cover = getUserProfileCover(req.params.user_id);
 
     // Identify if is friend with current user
@@ -198,19 +198,12 @@ app.get('/', isUserAuthorized, async (req, res) => {
             const queryString = `SELECT * FROM users WHERE user_id IN (${queryCondition})`;
             const foundUsers = await runQuery(queryString, relatedUsersId);
             if(!foundUsers) return;
-            foundUsers.forEach((user) => {
+            for(const user of foundUsers) {
                 user.password = null;
                 user.accountName = null;
-
-                const filePath = path.join(userAvatarDirPath, `user_avatar_${user.user_id}.${userAvatarFormat}`);
-                if(!fs.existsSync(filePath)) return;
-
-                const avatarBuffer = fs.readFileSync(filePath);
-                const base64avatar = Buffer.from(avatarBuffer).toString('base64');
-                user.avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
-
+                user.avatar = await getUserAvatar(user.user_id);
                 relatedUsers.push(user);
-            })
+            }
         }
         
         res.render("blog.ejs", {

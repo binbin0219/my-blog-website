@@ -2,20 +2,20 @@ import { userAvatarDirPath, userAvatarFormat, userProfileCoverImgDirPath, userPr
 import { runQuery } from "./databaseSetup.js";
 import fs from "fs";
 import path from "path";
+import { generateRandomAvatar } from "./index.js";
 
 async function getUserData(userId) {
     const result = await runQuery("SELECT * FROM users WHERE user_id = $1", [userId]);
     const user = result[0];
     if(!user) return null;
-    user.avatar = getUserAvatar(userId);
+    user.avatar = await getUserAvatar(userId);
     return user;
 }
 
-function getUserAvatar(userId) {
+async function getUserAvatar(userId) {
     // Get user avatar
     const filePath = path.join(userAvatarDirPath, `user_avatar_${userId}.${userAvatarFormat}`);
-    if(!fs.existsSync(filePath)) return;
-    const avatarBuffer = fs.readFileSync(filePath);
+    const avatarBuffer = fs.existsSync(filePath) ? fs.readFileSync(filePath) : await generateRandomAvatar();
     const base64avatar = Buffer.from(avatarBuffer).toString('base64');
     const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
     return avatar;
