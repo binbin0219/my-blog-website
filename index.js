@@ -45,7 +45,7 @@ export async function generateRandomAvatar(gender) {
     return avatarSVG;
 }
 
-// await dropAllTables();
+await dropAllTables();
 
 // Connect to the database
 const isAllTablesExist = await checkIfAllTablesExist();
