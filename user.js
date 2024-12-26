@@ -14,24 +14,14 @@ async function getUserData(userId) {
 }
 
 async function getUserAvatar(userId) {
-    // Get user avatar
     const filePath = path.join(userAvatarDirPath, `user_avatar_${userId}.${userAvatarFormat}`);
-    if(!fs.existsSync(filePath)) {
-        fs.mkdirSync(userAvatarDirPath, { recursive: true });
-        
-        // Generate a random avatar and save it
-        const randomAvatar = await generateRandomAvatar('male');
-        sharp(Buffer.from(randomAvatar))
-        .toFormat(`${userAvatarFormat}`)
-        .toFile(userAvatarDirPath + `/user_avatar_${userId}.${userAvatarFormat}`);
 
-        const avatarBuffer = await sharp(Buffer.from(randomAvatar))
-        .toFormat(`${userAvatarFormat}`)
-        .toBuffer();
-        const base64avatar = avatarBuffer.toString('base64');
-        const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
-        return avatar;
+    // If the avatar doesn't exist, create a random one
+    if(!fs.existsSync(filePath)) {
+        return await createRandomUserAvatar(userId, true);
     }
+
+    // If the avatar exists, read from file and return it
     const avatarBuffer = fs.readFileSync(filePath);
     const base64avatar = Buffer.from(avatarBuffer).toString('base64');
     const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
@@ -47,8 +37,28 @@ function getUserProfileCover(userId) {
     return cover;
 }
 
-function createRandomUserAvatar(userId) {
+async function createRandomUserAvatar(userId, returnAsBase64 = false) {
 
+    if(!fs.existsSync(userAvatarDirPath)) {
+        fs.mkdirSync(userAvatarDirPath, { recursive: true });
+    }
+
+    // Generate a random avatar and save it
+    const randomAvatar = await generateRandomAvatar('male');
+    sharp(Buffer.from(randomAvatar))
+    .toFormat(`${userAvatarFormat}`)
+    .toFile(userAvatarDirPath + `/user_avatar_${userId}.${userAvatarFormat}`);
+
+    if(returnAsBase64) {
+        const avatarBuffer = await sharp(Buffer.from(randomAvatar))
+        .toFormat(`${userAvatarFormat}`)
+        .toBuffer();
+        const base64avatar = avatarBuffer.toString('base64');
+        const avatar = `data:image/${userAvatarFormat};base64,${base64avatar}`
+        return avatar;
+    } else {
+        return randomAvatar;
+    }
 }
 
 export { getUserData, getUserAvatar, getUserProfileCover };
