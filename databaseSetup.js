@@ -10,7 +10,7 @@ import 'dotenv/config'
 let db;
 if(isUsingRenderHostDatabase) {
     db = new pg.Pool({
-      connectionString: 'postgresql://jiungbin0219:dg6y5Aeu7cY8GRCmoQEJpk34WrBjQApU@dpg-ctka85dumphs73ffh6p0-a.singapore-postgres.render.com/blogify_re9j',
+      connectionString: 'postgresql://jiungbin0219:cvQ1hjKMNfS1uTaUWDyTgQiFzw1bVUlT@dpg-cu83n69opnds73ep9hag-a.oregon-postgres.render.com/blogify_7s4j',
       ssl: {
           rejectUnauthorized: false // For self-signed certificates (optional)
       }
